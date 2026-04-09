@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Recipe, RecipeInput, Ingredient, Step } from "@/lib/types";
 
-export function useRecipes() {
+export function useRecipes(cookbookId?: string | null) {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -16,15 +16,24 @@ export function useRecipes() {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) { setLoading(false); return; }
 
-    const { data, error: fetchError } = await supabase
+    let query = supabase
       .from("recipes")
       .select(`
         *,
         ingredients ( * ),
         steps ( * )
       `)
-      .eq("user_id", user.user.id)
       .order("created_at", { ascending: false });
+
+    if (cookbookId) {
+      // Show all recipes in the cookbook (may include other members' recipes)
+      query = query.eq("cookbook_id", cookbookId);
+    } else {
+      // Fallback: personal recipes with no cookbook
+      query = query.eq("user_id", user.user.id).is("cookbook_id", null);
+    }
+
+    const { data, error: fetchError } = await query;
 
     if (fetchError) {
       setError("Failed to load recipes. Please try again.");
@@ -42,7 +51,7 @@ export function useRecipes() {
       setRecipes(sorted);
     }
     setLoading(false);
-  }, [supabase]);
+  }, [supabase, cookbookId]);
 
   useEffect(() => {
     fetchRecipes();
@@ -63,6 +72,9 @@ export function useRecipes() {
         time: input.time,
         tags: input.tags,
         source_url: input.source_url || null,
+        photo_path: input.photo_path ?? null,
+        notes: input.notes || null,
+        cookbook_id: input.cookbook_id ?? cookbookId ?? null,
       })
       .select()
       .single();
@@ -114,6 +126,8 @@ export function useRecipes() {
         time: input.time,
         tags: input.tags,
         source_url: input.source_url || null,
+        photo_path: input.photo_path ?? null,
+        notes: input.notes || null,
         updated_at: new Date().toISOString(),
       })
       .eq("id", id);

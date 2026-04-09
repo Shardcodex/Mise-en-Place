@@ -16,11 +16,5 @@ export default async function AppLayout({
     redirect("/login");
   }
 
-  // Get recipe count for sidebar
-  const { count } = await supabase
-    .from("recipes")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", user.id);
-
-  return <AppShell recipeCount={count ?? 0}>{children}</AppShell>;
+  return <AppShell>{children}</AppShell>;
 }

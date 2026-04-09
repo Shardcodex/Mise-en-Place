@@ -13,13 +13,30 @@ import type {
 // ─── Aggregation helper ───────────────────────────────────────────────────────
 
 /**
+ * Stem common English plural suffixes from a single word.
+ *   "tomatoes" → "tomato"   "berries" → "berry"
+ *   "peaches"  → "peach"    "carrots" → "carrot"
+ *   "asparagus" → "asparagus"  (us/is/as/ss endings are left alone)
+ */
+function depluralize(word: string): string {
+  if (word.endsWith("ies") && word.length > 4) return word.slice(0, -3) + "y";
+  if (/(?:oes|xes|ches|shes|sses)$/.test(word) && word.length > 4) return word.slice(0, -2);
+  if (word.endsWith("s") && word.length > 3 && !/(us|is|as|ss)$/.test(word)) return word.slice(0, -1);
+  return word;
+}
+
+/**
  * Normalise an ingredient name into a stable DB key.
+ * Strips common plural suffixes so "tomato" and "tomatoes" share a key.
  * e.g. "All-Purpose Flour" → "all_purpose_flour"
+ *      "Cherry Tomatoes"   → "cherry_tomato"
  */
 function toCheckKey(name: string): string {
-  return name
-    .toLowerCase()
-    .trim()
+  const lower = name.toLowerCase().trim();
+  const parts = lower.split(/\s+/);
+  parts[parts.length - 1] = depluralize(parts[parts.length - 1]);
+  return parts
+    .join(" ")
     .replace(/[^a-z0-9]+/g, "_")
     .replace(/^_|_$/g, "");
 }
@@ -50,11 +67,10 @@ function aggregateItems(
     };
 
     for (const ingredient of recipe.ingredients) {
-      const normalised = ingredient.name.toLowerCase().trim();
       const check_key = toCheckKey(ingredient.name);
 
-      if (map.has(normalised)) {
-        const existing = map.get(normalised)!;
+      if (map.has(check_key)) {
+        const existing = map.get(check_key)!;
 
         // Accumulate the amount contribution from this assignment
         existing.amounts.push({
@@ -68,7 +84,7 @@ function aggregateItems(
           existing.source_recipes.push(sourceRecipe);
         }
       } else {
-        map.set(normalised, {
+        map.set(check_key, {
           ingredient_name: ingredient.name,
           category: ingredient.category,
           amounts: [

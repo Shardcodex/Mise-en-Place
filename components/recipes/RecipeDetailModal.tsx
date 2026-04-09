@@ -3,10 +3,11 @@
 import { useMemo } from "react";
 import {
   X, Users, Clock, Link as LinkIcon, ShoppingBasket, ListOrdered,
-  Pencil, Printer, Trash2, AlertTriangle,
+  Pencil, Printer, Trash2, AlertTriangle, NotebookPen,
 } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import Tag from "@/components/ui/Tag";
+import RecipePhoto from "@/components/recipes/RecipePhoto";
 import { CATEGORY_ICONS } from "@/lib/constants";
 import type { Recipe, Ingredient, IngredientCategory } from "@/lib/types";
 
@@ -98,24 +99,27 @@ export default function RecipeDetailModal({
 
   return (
     <Modal open={open} onClose={onClose}>
-      {/* Sticky header */}
-      <div className="sticky top-0 bg-bg-card z-10 px-8 pt-6 pb-4 border-b border-border">
-        <div className="flex items-start justify-between">
-          <div className="flex flex-col items-center flex-1">
-            <div className="w-16 h-16 rounded-full bg-accent-bg flex items-center justify-center text-[32px] mb-3 shadow-sm">
-              {recipe.emoji || "🍽️"}
-            </div>
-            <h2 className="font-bold text-[20px] text-ink text-center">
-              {recipe.name}
-            </h2>
-          </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full bg-bg-warm flex items-center justify-center hover:bg-border transition-colors shrink-0"
-          >
-            <X className="w-4 h-4 text-ink-light" strokeWidth={2} />
-          </button>
-        </div>
+      {/* Photo banner + close button (not sticky — scrolls with content) */}
+      <div className="relative h-[220px] w-full overflow-hidden">
+        <RecipePhoto
+          photoPath={recipe.photo_path}
+          emoji={recipe.emoji}
+          cover
+          alt={recipe.name}
+        />
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center hover:bg-black/50 transition-colors"
+        >
+          <X className="w-4 h-4 text-white" strokeWidth={2} />
+        </button>
+      </div>
+
+      {/* Sticky header — name + meta (appears once photo scrolls away) */}
+      <div className="sticky top-0 bg-bg-card z-10 px-8 pt-5 pb-4 border-b border-border">
+        <h2 className="font-bold text-[20px] text-ink text-center mb-0">
+          {recipe.name}
+        </h2>
 
         {/* Meta bar */}
         <div className="flex items-center justify-center gap-5 mt-3 text-ink-muted">
@@ -207,6 +211,23 @@ export default function RecipeDetailModal({
                   </p>
                 </div>
               ))}
+            </div>
+          </>
+        )}
+
+        {/* Notes */}
+        {recipe.notes && (
+          <>
+            <div className="flex items-center gap-2 mb-3 mt-6">
+              <NotebookPen className="w-4 h-4 text-herb" strokeWidth={2} />
+              <h3 className="font-semibold text-[13px] text-herb uppercase tracking-[0.04em]">
+                Notes
+              </h3>
+            </div>
+            <div className="bg-[#FFFDF5] border border-[#E8DFC0] rounded-input px-5 py-4">
+              <p className="text-[13px] text-ink leading-relaxed whitespace-pre-wrap">
+                {recipe.notes}
+              </p>
             </div>
           </>
         )}

@@ -5,14 +5,14 @@ import Sidebar from "@/components/layout/Sidebar";
 import MobileHeader from "@/components/layout/MobileHeader";
 import MobileTabBar from "@/components/layout/MobileTabBar";
 import { ToastProvider, useToast } from "@/components/layout/Toast";
+import { CookbookProvider } from "@/contexts/CookbookContext";
 import { seedRecipesIfEmpty } from "@/lib/seed";
 
 interface AppShellProps {
-  recipeCount: number;
   children: React.ReactNode;
 }
 
-function AppShellInner({ recipeCount, children }: AppShellProps) {
+function AppShellInner({ children }: AppShellProps) {
   const { showToast } = useToast();
   const seeded = useRef(false);
 
@@ -23,7 +23,6 @@ function AppShellInner({ recipeCount, children }: AppShellProps) {
     seedRecipesIfEmpty().then((count) => {
       if (count > 0) {
         showToast(`${count} recipes loaded successfully`);
-        // Reload to refresh recipe count in sidebar
         window.location.reload();
       }
     });
@@ -31,7 +30,7 @@ function AppShellInner({ recipeCount, children }: AppShellProps) {
 
   return (
     <div className="min-h-screen bg-bg text-ink flex">
-      <Sidebar recipeCount={recipeCount} />
+      <Sidebar />
 
       <div className="flex-1 flex flex-col min-h-screen md:min-h-0 relative">
         <MobileHeader />
@@ -46,10 +45,12 @@ function AppShellInner({ recipeCount, children }: AppShellProps) {
   );
 }
 
-export default function AppShell({ recipeCount, children }: AppShellProps) {
+export default function AppShell({ children }: AppShellProps) {
   return (
     <ToastProvider>
-      <AppShellInner recipeCount={recipeCount}>{children}</AppShellInner>
+      <CookbookProvider>
+        <AppShellInner>{children}</AppShellInner>
+      </CookbookProvider>
     </ToastProvider>
   );
 }

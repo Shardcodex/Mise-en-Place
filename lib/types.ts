@@ -1,3 +1,32 @@
+// ─── Cookbook ─────────────────────────────────────────────────────────────────
+
+export type CookbookRole = "owner" | "member";
+export type MemberStatus = "pending" | "accepted";
+
+export interface Cookbook {
+  id: string;
+  owner_id: string;
+  name: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CookbookMember {
+  id: string;
+  cookbook_id: string;
+  user_id: string | null;
+  invited_email: string | null;
+  invite_token: string;
+  role: CookbookRole;
+  status: MemberStatus;
+  invited_at: string;
+  accepted_at: string | null;
+  profile?: { display_name: string };
+}
+
+// ─── Ingredient category ──────────────────────────────────────────────────────
+
 export type IngredientCategory =
   | "Produce"
   | "Dairy"
@@ -39,12 +68,15 @@ export interface Step {
 export interface Recipe {
   id: string;
   user_id: string;
+  cookbook_id: string | null;
   name: string;
   emoji: string;
+  photo_path: string | null;
   servings: number;
   time: string;
   tags: string[];
   source_url: string | null;
+  notes: string | null;
   created_at: string;
   updated_at: string;
   ingredients: Ingredient[];
@@ -88,10 +120,13 @@ export interface IngredientInput {
 export interface RecipeInput {
   name: string;
   emoji: string;
+  cookbook_id?: string | null;
+  photo_path?: string | null;
   servings: number;
   time: string;
   tags: string[];
   source_url: string;
+  notes?: string;
   ingredients: IngredientInput[];
   steps: string[];
 }

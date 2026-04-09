@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, CalendarDays, ShoppingCart, Settings, ChefHat } from "lucide-react";
+import { BookOpen, CalendarDays, ShoppingCart, Settings } from "lucide-react";
+import CookbookSwitcher from "@/components/cookbooks/CookbookSwitcher";
 
 const NAV_ITEMS = [
   { icon: BookOpen, label: "Recipes", href: "/recipes" },
@@ -11,11 +12,7 @@ const NAV_ITEMS = [
   { icon: Settings, label: "Settings", href: "/settings" },
 ];
 
-interface SidebarProps {
-  recipeCount: number;
-}
-
-export default function Sidebar({ recipeCount }: SidebarProps) {
+export default function Sidebar() {
   const pathname = usePathname();
 
   return (
@@ -50,17 +47,9 @@ export default function Sidebar({ recipeCount }: SidebarProps) {
         })}
       </nav>
 
-      {/* Footer */}
-      <div className="px-6 py-6 border-t border-border">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-accent-bg flex items-center justify-center">
-            <ChefHat className="w-4 h-4 text-accent" strokeWidth={2} />
-          </div>
-          <div>
-            <p className="text-[11px] font-medium text-ink">Local Kitchen</p>
-            <p className="text-[9px] text-ink-muted">{recipeCount} recipes</p>
-          </div>
-        </div>
+      {/* Cookbook switcher footer */}
+      <div className="px-3 py-4 border-t border-border">
+        <CookbookSwitcher />
       </div>
     </aside>
   );

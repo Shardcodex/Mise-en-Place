@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { Search, Plus, ClipboardPaste, BookOpen } from "lucide-react";
 import { useRecipes } from "@/hooks/useRecipes";
+import { useCookbookContext } from "@/contexts/CookbookContext";
 import { useToast } from "@/components/layout/Toast";
 import RecipeCard from "@/components/recipes/RecipeCard";
 import RecipeDetailModal from "@/components/recipes/RecipeDetailModal";
@@ -10,12 +11,13 @@ import RecipeFormModal from "@/components/recipes/RecipeFormModal";
 import PasteImportModal from "@/components/recipes/PasteImportModal";
 import { RecipeCardSkeleton } from "@/components/ui/Skeleton";
 import ErrorBanner from "@/components/ui/ErrorBanner";
-import type { Recipe, RecipeInput } from "@/lib/types";
+import type { Recipe, RecipeInput, IngredientCategory } from "@/lib/types";
 import type { ParsedRecipe } from "@/lib/parser";
 
 export default function RecipesView() {
+  const { activeCookbook } = useCookbookContext();
   const { recipes, loading, error, fetchRecipes, createRecipe, updateRecipe, deleteRecipe } =
-    useRecipes();
+    useRecipes(activeCookbook?.id);
   const { showToast } = useToast();
 
   const [search, setSearch] = useState("");
@@ -36,6 +38,19 @@ export default function RecipesView() {
         r.ingredients?.some((i) => i.name.toLowerCase().includes(q))
     );
   }, [recipes, search]);
+
+  /** name (lowercase) → most-recently-seen category, for pre-filling the form */
+  const knownCategories = useMemo(() => {
+    const map: Record<string, IngredientCategory> = {};
+    for (const recipe of recipes) {
+      for (const ing of recipe.ingredients ?? []) {
+        if (ing.name && ing.category) {
+          map[ing.name.toLowerCase().trim()] = ing.category;
+        }
+      }
+    }
+    return map;
+  }, [recipes]);
 
   function handleCardClick(recipe: Recipe) {
     setSelectedRecipe(recipe);
@@ -242,6 +257,7 @@ export default function RecipesView() {
         onClose={handleFormClose}
         onSave={handleFormSave}
         recipe={formRecipe}
+        knownCategories={knownCategories}
       />
       <PasteImportModal
         open={pasteOpen}

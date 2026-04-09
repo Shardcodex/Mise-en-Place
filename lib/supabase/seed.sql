@@ -56,9 +56,15 @@ create table if not exists public.recipes (
   time text default '',
   tags text[] default '{}',
   source_url text,
+  photo_path text,
+  notes text,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
+
+-- Migrations (run if the table already exists):
+-- alter table public.recipes add column if not exists notes text;
+-- alter table public.recipes add column if not exists photo_path text;
 
 alter table public.recipes enable row level security;
 
@@ -214,10 +220,129 @@ create policy "Users can delete own checks"
   using (auth.uid() = user_id);
 
 -- ═══════════════════════════════════════
+-- COOKBOOKS
+-- ═══════════════════════════════════════
+create table if not exists public.cookbooks (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references public.profiles(id) on delete cascade,
+  name text not null,
+  description text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table public.cookbooks enable row level security;
+
+create policy "Cookbook visible to owner and accepted members"
+  on public.cookbooks for select
+  using (
+    auth.uid() = owner_id
+    or exists (
+      select 1 from public.cookbook_members m
+      where m.cookbook_id = id and m.user_id = auth.uid() and m.status = 'accepted'
+    )
+  );
+
+create policy "Users can create cookbooks"
+  on public.cookbooks for insert
+  with check (auth.uid() = owner_id);
+
+create policy "Owner can update cookbook"
+  on public.cookbooks for update
+  using (auth.uid() = owner_id);
+
+create policy "Owner can delete cookbook"
+  on public.cookbooks for delete
+  using (auth.uid() = owner_id);
+
+-- ═══════════════════════════════════════
+-- COOKBOOK MEMBERS
+-- ═══════════════════════════════════════
+create table if not exists public.cookbook_members (
+  id uuid primary key default gen_random_uuid(),
+  cookbook_id uuid not null references public.cookbooks(id) on delete cascade,
+  user_id uuid references public.profiles(id) on delete cascade,
+  invited_email text,
+  invite_token uuid default gen_random_uuid() unique not null,
+  role text not null default 'member' check (role in ('owner','member')),
+  status text not null default 'pending' check (status in ('pending','accepted')),
+  invited_at timestamptz default now(),
+  accepted_at timestamptz
+);
+
+alter table public.cookbook_members enable row level security;
+
+create policy "Member visible to self and cookbook owner"
+  on public.cookbook_members for select
+  using (
+    user_id = auth.uid()
+    or exists (
+      select 1 from public.cookbooks c where c.id = cookbook_id and c.owner_id = auth.uid()
+    )
+    -- allow reading own pending invite by token (needed for accept flow)
+    or invite_token::text = current_setting('request.jwt.claims', true)::json->>'invite_token'
+  );
+
+create policy "Owner can invite members"
+  on public.cookbook_members for insert
+  with check (
+    exists (select 1 from public.cookbooks c where c.id = cookbook_id and c.owner_id = auth.uid())
+  );
+
+create policy "Member can accept invite, owner can manage"
+  on public.cookbook_members for update
+  using (
+    user_id = auth.uid()
+    or exists (select 1 from public.cookbooks c where c.id = cookbook_id and c.owner_id = auth.uid())
+  );
+
+create policy "Owner or member can remove"
+  on public.cookbook_members for delete
+  using (
+    user_id = auth.uid()
+    or exists (select 1 from public.cookbooks c where c.id = cookbook_id and c.owner_id = auth.uid())
+  );
+
+-- ═══════════════════════════════════════
+-- COOKBOOK MIGRATIONS (run after initial schema)
+-- ═══════════════════════════════════════
+-- Add cookbook_id to recipes:
+-- alter table public.recipes add column if not exists cookbook_id uuid references public.cookbooks(id) on delete set null;
+--
+-- Drop and recreate recipe RLS to allow cookbook member access:
+-- drop policy if exists "Users can view own recipes" on public.recipes;
+-- create policy "Users can view own recipes"
+--   on public.recipes for select
+--   using (
+--     auth.uid() = user_id
+--     or (cookbook_id is not null and exists (
+--       select 1 from public.cookbooks c where c.id = cookbook_id and c.owner_id = auth.uid()
+--     ))
+--     or (cookbook_id is not null and exists (
+--       select 1 from public.cookbook_members m
+--       where m.cookbook_id = recipes.cookbook_id and m.user_id = auth.uid() and m.status = 'accepted'
+--     ))
+--   );
+--
+-- (Repeat similar expansions for insert/update/delete and for ingredients/steps.)
+--
+-- Migrate existing recipes into a default cookbook per user:
+-- insert into public.cookbooks (owner_id, name)
+--   select distinct user_id, 'My Cookbook' from public.recipes
+--   on conflict do nothing;
+-- update public.recipes r
+--   set cookbook_id = (select id from public.cookbooks c where c.owner_id = r.user_id limit 1)
+--   where cookbook_id is null;
+
+-- ═══════════════════════════════════════
 -- INDEXES
 -- ═══════════════════════════════════════
 create index if not exists idx_recipes_user_id on public.recipes(user_id);
+create index if not exists idx_recipes_cookbook_id on public.recipes(cookbook_id);
 create index if not exists idx_ingredients_recipe_id on public.ingredients(recipe_id);
 create index if not exists idx_steps_recipe_id on public.steps(recipe_id);
 create index if not exists idx_planner_user_id on public.planner_assignments(user_id);
 create index if not exists idx_shopping_user_id on public.shopping_checks(user_id);
+create index if not exists idx_cookbook_members_cookbook on public.cookbook_members(cookbook_id);
+create index if not exists idx_cookbook_members_user on public.cookbook_members(user_id);
+create index if not exists idx_cookbook_members_token on public.cookbook_members(invite_token);

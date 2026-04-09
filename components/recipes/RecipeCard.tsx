@@ -1,5 +1,6 @@
 import { Clock, Users, List } from "lucide-react";
 import Tag from "@/components/ui/Tag";
+import RecipePhoto from "@/components/recipes/RecipePhoto";
 import { getTagColors } from "@/lib/constants";
 import type { Recipe } from "@/lib/types";
 
@@ -19,23 +20,28 @@ export default function RecipeCard({ recipe, onClick }: RecipeCardProps) {
       onClick={onClick}
       className="bg-bg-card border border-border rounded-card overflow-hidden cursor-pointer group transition-all duration-300 hover:-translate-y-[2px] hover:shadow-card"
     >
-      {/* Colored top bar */}
-      <div className="h-[3px] w-full" style={{ backgroundColor: topBorderColor }} />
-
-      <div className="p-5 transition-colors duration-300 group-hover:bg-[#FAFAF8]">
-        {/* Emoji + time */}
-        <div className="flex items-start justify-between mb-3">
-          <div className="w-11 h-11 rounded-full bg-accent-bg flex items-center justify-center text-[22px]">
-            {recipe.emoji || "🍽️"}
+      {/* Photo strip — full width cover, falls back to emoji on warm background */}
+      <div className="h-[140px] w-full overflow-hidden relative">
+        <RecipePhoto
+          photoPath={recipe.photo_path}
+          emoji={recipe.emoji}
+          cover
+        />
+        {/* Colored accent bar along the bottom of the photo area */}
+        <div
+          className="absolute bottom-0 left-0 right-0 h-[3px]"
+          style={{ backgroundColor: topBorderColor }}
+        />
+        {/* Time badge — top-right */}
+        {recipe.time && (
+          <div className="absolute top-2.5 right-2.5 flex items-center gap-1 bg-black/40 backdrop-blur-sm rounded-full px-2 py-0.5">
+            <Clock className="w-2.5 h-2.5 text-white" strokeWidth={2} />
+            <span className="text-[10px] text-white font-medium">{recipe.time}</span>
           </div>
-          {recipe.time && (
-            <div className="flex items-center gap-1 text-ink-muted">
-              <Clock className="w-3 h-3" strokeWidth={2} />
-              <span className="text-[11px]">{recipe.time}</span>
-            </div>
-          )}
-        </div>
+        )}
+      </div>
 
+      <div className="p-4 transition-colors duration-300 group-hover:bg-[#FAFAF8]">
         {/* Name */}
         <h3 className="font-semibold text-[14px] text-ink mb-2 leading-snug">
           {recipe.name}
