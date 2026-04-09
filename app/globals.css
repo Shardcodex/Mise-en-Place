@@ -18,11 +18,60 @@
 
 /* Print styles */
 @media print {
+  /* Hide navigation, headers, action buttons */
   .no-print {
     display: none !important;
   }
+
+  /* Reset background/shadows for clean output */
   body {
     background: white !important;
     color: black !important;
+    font-size: 12pt;
+  }
+
+  /* Sidebar and mobile chrome */
+  nav,
+  aside,
+  header,
+  footer {
+    display: none !important;
+  }
+
+  /* Full-width main content */
+  main {
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Cards: remove shadows, keep borders */
+  .shadow-card,
+  .shadow-card-hover {
+    box-shadow: none !important;
+  }
+
+  /* Keep category cards together — don't split mid-card */
+  .print\:break-inside-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Two-column grid falls back gracefully */
+  .print\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Checkbox: always show as outlined circle when printing */
+  [role="checkbox"] {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Animate nothing */
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
   }
 }
