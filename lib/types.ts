@@ -37,7 +37,16 @@ export type IngredientCategory =
   | "Beverages"
   | "Other";
 
-export type MealType = "breakfast" | "lunch" | "dinner" | "snack";
+export type MealType =
+  | "breakfast"
+  | "brunch"
+  | "lunch"
+  | "dinner"
+  | "snack"
+  | "dessert"
+  | "quick-bites"
+  | "appetizers"
+  | "sides";
 
 export type DayName =
   | "Monday"

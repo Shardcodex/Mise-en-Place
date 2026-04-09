@@ -1,6 +1,6 @@
 "use client";
 
-import { MEALS } from "@/lib/constants";
+import { PLANNER_MEALS } from "@/lib/constants";
 import MealSlot from "./MealSlot";
 import type { PlannerAssignment, DayName, MealType } from "@/lib/types";
 
@@ -80,7 +80,7 @@ export default function DayCard({
 
       {/* Meal slots */}
       <div className="flex flex-col">
-        {MEALS.map((meal) => (
+        {PLANNER_MEALS.map((meal) => (
           <MealSlot
             key={meal}
             day={day}

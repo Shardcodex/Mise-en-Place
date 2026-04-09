@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { Search, Check, ChevronLeft } from "lucide-react";
 import Modal, { ModalHeader, ModalFooter } from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
-import { DAYS, MEALS, MEAL_LABELS, SCALE_PRESETS } from "@/lib/constants";
+import { DAYS, MEALS, PLANNER_MEALS, MEAL_LABELS, SCALE_PRESETS } from "@/lib/constants";
 
 // ─── Shared row component ─────────────────────────────────────────────────────
 function RecipePickerRow({ recipe, onPick }: { recipe: Recipe; onPick: (r: Recipe) => void }) {
@@ -403,7 +403,7 @@ export function RecipePickerEdit({
               onChange={(e) => setMealType(e.target.value as MealType)}
               className="w-full bg-bg-warm border border-border rounded-input px-3 py-2.5 text-[13px] text-ink focus:outline-none focus:border-accent transition-colors"
             >
-              {MEALS.map((m) => (
+              {PLANNER_MEALS.map((m) => (
                 <option key={m} value={m}>
                   {MEAL_LABELS[m]}
                 </option>

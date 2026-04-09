@@ -9,9 +9,14 @@ import {
   GlassWater,
   HelpCircle,
   Sun,
-  Sunrise,
   Sunset,
   Cookie,
+  Coffee,
+  Utensils,
+  Cake,
+  Zap,
+  ChefHat,
+  UtensilsCrossed,
 } from "lucide-react";
 
 export const CATEGORIES: IngredientCategory[] = [
@@ -47,20 +52,44 @@ export const CATEGORY_EMOJI: Record<IngredientCategory, string> = {
   Other: "📦",
 };
 
-export const MEALS: MealType[] = ["breakfast", "lunch", "dinner", "snack"];
+/** All meal type categories — used for recipe tagging and filtering. */
+export const MEALS: MealType[] = [
+  "breakfast",
+  "brunch",
+  "lunch",
+  "dinner",
+  "snack",
+  "dessert",
+  "quick-bites",
+  "appetizers",
+  "sides",
+];
+
+/** Subset used for planner day-card slots (keeps the planner compact). */
+export const PLANNER_MEALS: MealType[] = ["breakfast", "lunch", "dinner", "snack"];
 
 export const MEAL_LABELS: Record<MealType, string> = {
   breakfast: "Breakfast",
+  brunch: "Brunch",
   lunch: "Lunch",
   dinner: "Dinner",
   snack: "Snack",
+  dessert: "Dessert",
+  "quick-bites": "Quick Bites",
+  appetizers: "Appetizers",
+  sides: "Sides",
 };
 
 export const MEAL_ICONS: Record<MealType, typeof Sun> = {
   breakfast: Sun,
-  lunch: Sunrise,
+  brunch: Coffee,
+  lunch: Utensils,
   dinner: Sunset,
   snack: Cookie,
+  dessert: Cake,
+  "quick-bites": Zap,
+  appetizers: ChefHat,
+  sides: UtensilsCrossed,
 };
 
 export const DAYS: DayName[] = [
