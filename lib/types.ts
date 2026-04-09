@@ -31,8 +31,12 @@ export type IngredientCategory =
   | "Produce"
   | "Dairy"
   | "Meat & Seafood"
+  | "Deli"
   | "Bakery"
+  | "Canned Goods"
   | "Pantry"
+  | "Condiments"
+  | "Spices & Herbs"
   | "Frozen"
   | "Beverages"
   | "Other";

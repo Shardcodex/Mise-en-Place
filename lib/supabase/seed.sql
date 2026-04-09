@@ -67,6 +67,10 @@ create table if not exists public.recipes (
 -- alter table public.recipes add column if not exists notes text;
 -- alter table public.recipes add column if not exists photo_path text;
 -- alter table public.recipes add column if not exists meal_types text[] default '{}';
+-- Expand ingredient category constraint (run on existing DB):
+-- alter table public.ingredients drop constraint if exists ingredients_category_check;
+-- alter table public.ingredients add constraint ingredients_category_check
+--   check (category in ('Produce','Dairy','Meat & Seafood','Deli','Bakery','Canned Goods','Pantry','Condiments','Spices & Herbs','Frozen','Beverages','Other'));
 
 alter table public.recipes enable row level security;
 
@@ -95,7 +99,7 @@ create table if not exists public.ingredients (
   name text not null,
   amount text default '',
   unit text default '',
-  category text default 'Other' check (category in ('Produce','Dairy','Meat & Seafood','Bakery','Pantry','Frozen','Beverages','Other')),
+  category text default 'Other' check (category in ('Produce','Dairy','Meat & Seafood','Deli','Bakery','Canned Goods','Pantry','Condiments','Spices & Herbs','Frozen','Beverages','Other')),
   sort_order integer default 0
 );
 
