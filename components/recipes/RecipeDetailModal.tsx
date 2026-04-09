@@ -8,7 +8,7 @@ import {
 import Modal from "@/components/ui/Modal";
 import Tag from "@/components/ui/Tag";
 import RecipePhoto from "@/components/recipes/RecipePhoto";
-import { CATEGORY_ICONS } from "@/lib/constants";
+import { CATEGORY_ICONS, MEAL_ICONS, MEAL_LABELS } from "@/lib/constants";
 import type { Recipe, Ingredient, IngredientCategory } from "@/lib/types";
 
 interface RecipeDetailModalProps {
@@ -147,6 +147,24 @@ export default function RecipeDetailModal({
             </a>
           )}
         </div>
+
+        {/* Meal type badges */}
+        {recipe.meal_types && recipe.meal_types.length > 0 && (
+          <div className="flex flex-wrap justify-center gap-1.5 mt-3">
+            {recipe.meal_types.map((meal) => {
+              const Icon = MEAL_ICONS[meal];
+              return (
+                <span
+                  key={meal}
+                  className="flex items-center gap-1 bg-accent-bg text-accent border border-accent/20 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                >
+                  <Icon className="w-3 h-3" strokeWidth={2.5} />
+                  {MEAL_LABELS[meal]}
+                </span>
+              );
+            })}
+          </div>
+        )}
 
         {/* Tags */}
         {recipe.tags && recipe.tags.length > 0 && (

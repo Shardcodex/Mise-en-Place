@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { Search, Plus, ClipboardPaste, BookOpen } from "lucide-react";
+import { MEALS, MEAL_LABELS, MEAL_ICONS } from "@/lib/constants";
 import { useRecipes } from "@/hooks/useRecipes";
 import { useCookbookContext } from "@/contexts/CookbookContext";
 import { useToast } from "@/components/layout/Toast";
@@ -11,7 +12,7 @@ import RecipeFormModal from "@/components/recipes/RecipeFormModal";
 import PasteImportModal from "@/components/recipes/PasteImportModal";
 import { RecipeCardSkeleton } from "@/components/ui/Skeleton";
 import ErrorBanner from "@/components/ui/ErrorBanner";
-import type { Recipe, RecipeInput, IngredientCategory } from "@/lib/types";
+import type { Recipe, RecipeInput, IngredientCategory, MealType } from "@/lib/types";
 import type { ParsedRecipe } from "@/lib/parser";
 
 export default function RecipesView() {
@@ -21,6 +22,7 @@ export default function RecipesView() {
   const { showToast } = useToast();
 
   const [search, setSearch] = useState("");
+  const [mealTypeFilter, setMealTypeFilter] = useState<MealType | null>(null);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
@@ -29,15 +31,19 @@ export default function RecipesView() {
   const [parsedForForm, setParsedForForm] = useState<ParsedRecipe | null>(null);
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return recipes;
+    let result = recipes;
+    if (mealTypeFilter) {
+      result = result.filter((r) => r.meal_types?.includes(mealTypeFilter));
+    }
+    if (!search.trim()) return result;
     const q = search.toLowerCase();
-    return recipes.filter(
+    return result.filter(
       (r) =>
         r.name.toLowerCase().includes(q) ||
         r.tags?.some((t) => t.toLowerCase().includes(q)) ||
         r.ingredients?.some((i) => i.name.toLowerCase().includes(q))
     );
-  }, [recipes, search]);
+  }, [recipes, search, mealTypeFilter]);
 
   /** name (lowercase) → most-recently-seen category, for pre-filling the form */
   const knownCategories = useMemo(() => {
@@ -206,6 +212,38 @@ export default function RecipesView() {
         </div>
       </div>
 
+      {/* Meal type filter pills */}
+      <div className="flex items-center gap-2 mb-6 flex-wrap">
+        <button
+          onClick={() => setMealTypeFilter(null)}
+          className={`px-3.5 py-1.5 rounded-pill text-[12px] font-semibold border transition-all ${
+            !mealTypeFilter
+              ? "bg-accent text-white border-accent"
+              : "bg-bg-warm border-border text-ink-light hover:border-accent hover:text-accent"
+          }`}
+        >
+          All
+        </button>
+        {MEALS.map((meal) => {
+          const Icon = MEAL_ICONS[meal];
+          const active = mealTypeFilter === meal;
+          return (
+            <button
+              key={meal}
+              onClick={() => setMealTypeFilter(active ? null : meal)}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-pill text-[12px] font-semibold border transition-all ${
+                active
+                  ? "bg-accent text-white border-accent"
+                  : "bg-bg-warm border-border text-ink-light hover:border-accent hover:text-accent"
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5" strokeWidth={2} />
+              {MEAL_LABELS[meal]}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Error state */}
       {error && (
         <div className="mb-6">
@@ -224,11 +262,11 @@ export default function RecipesView() {
         <div className="text-center py-16 text-ink-muted">
           <BookOpen className="w-12 h-12 mx-auto mb-4 opacity-40" strokeWidth={1.5} />
           <p className="text-[16px] font-medium mb-1 text-ink">
-            {search ? "No recipes match your search" : "No recipes yet"}
+            {search || mealTypeFilter ? "No recipes match" : "No recipes yet"}
           </p>
           <p className="text-[13px]">
-            {search
-              ? "Try a different search term"
+            {search || mealTypeFilter
+              ? "Try clearing the search or filter"
               : 'Click "Add" to create your first recipe'}
           </p>
         </div>

@@ -75,6 +75,7 @@ export interface Recipe {
   servings: number;
   time: string;
   tags: string[];
+  meal_types: MealType[];
   source_url: string | null;
   notes: string | null;
   created_at: string;
@@ -125,6 +126,7 @@ export interface RecipeInput {
   servings: number;
   time: string;
   tags: string[];
+  meal_types?: MealType[];
   source_url: string;
   notes?: string;
   ingredients: IngredientInput[];

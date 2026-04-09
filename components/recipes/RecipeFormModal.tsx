@@ -4,9 +4,9 @@ import { useState, useEffect, useRef } from "react";
 import { Plus, X, AlertTriangle, Camera, Trash2 } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import RecipePhoto from "@/components/recipes/RecipePhoto";
-import { CATEGORIES } from "@/lib/constants";
+import { CATEGORIES, MEALS, MEAL_LABELS, MEAL_ICONS } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/client";
-import type { Recipe, RecipeInput, IngredientInput, IngredientCategory } from "@/lib/types";
+import type { Recipe, RecipeInput, IngredientInput, IngredientCategory, MealType } from "@/lib/types";
 
 interface RecipeFormModalProps {
   open: boolean;
@@ -43,12 +43,14 @@ export default function RecipeFormModal({
   const [servings, setServings] = useState("4");
   const [time, setTime] = useState("");
   const [tagsStr, setTagsStr] = useState("");
+  const [mealTypes, setMealTypes] = useState<MealType[]>([]);
   const [sourceUrl, setSourceUrl] = useState("");
   const [notes, setNotes] = useState("");
   const [ingredients, setIngredients] = useState<IngredientInput[]>([emptyIngredient()]);
   const [steps, setSteps] = useState<string[]>([""]);
   const [saving, setSaving] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]);
+  const [photoError, setPhotoError] = useState<string | null>(null);
 
   // Photo state
   const [existingPhotoPath, setExistingPhotoPath] = useState<string | null>(null);
@@ -63,6 +65,7 @@ export default function RecipeFormModal({
       setServings(String(recipe.servings));
       setTime(recipe.time || "");
       setTagsStr((recipe.tags || []).join(", "));
+      setMealTypes(recipe.meal_types || []);
       setSourceUrl(recipe.source_url || "");
       setNotes(recipe.notes || "");
       setExistingPhotoPath(recipe.photo_path || null);
@@ -81,6 +84,7 @@ export default function RecipeFormModal({
       setServings("4");
       setTime("");
       setTagsStr("");
+      setMealTypes([]);
       setSourceUrl("");
       setNotes("");
       setExistingPhotoPath(null);
@@ -94,6 +98,7 @@ export default function RecipeFormModal({
       setNewPhotoPreview(null);
     }
     setWarnings([]);
+    setPhotoError(null);
   }, [recipe, open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -131,6 +136,12 @@ export default function RecipeFormModal({
       return null;
     }
     return path;
+  }
+
+  function toggleMealType(meal: MealType) {
+    setMealTypes((prev) =>
+      prev.includes(meal) ? prev.filter((m) => m !== meal) : [...prev, meal]
+    );
   }
 
   function updateIngredient(index: number, field: keyof IngredientInput, value: string) {
@@ -191,6 +202,7 @@ export default function RecipeFormModal({
   async function handleSave() {
     if (!name.trim()) return;
     setSaving(true);
+    setPhotoError(null);
 
     const brokenRefs = findBrokenRefs();
     setWarnings(brokenRefs);
@@ -199,6 +211,9 @@ export default function RecipeFormModal({
     let finalPhotoPath: string | null = existingPhotoPath;
     if (newPhotoFile) {
       const uploaded = await uploadPhoto(newPhotoFile);
+      if (uploaded === null) {
+        setPhotoError("Photo upload failed — check that the recipe-photos storage bucket exists in Supabase with the correct RLS policies. The recipe will be saved without a photo.");
+      }
       finalPhotoPath = uploaded;
     }
 
@@ -208,6 +223,7 @@ export default function RecipeFormModal({
       photo_path: finalPhotoPath,
       servings: parseInt(servings) || 4,
       time: time.trim(),
+      meal_types: mealTypes,
       tags: tagsStr
         .split(",")
         .map((t) => t.trim())
@@ -244,6 +260,14 @@ export default function RecipeFormModal({
 
       {/* Form body */}
       <div className="px-8 py-6 space-y-5">
+        {/* Photo upload error */}
+        {photoError && (
+          <div className="bg-[#FFF0F0] border border-[#F0C8C8] rounded-input p-4 flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-danger shrink-0 mt-0.5" strokeWidth={2} />
+            <p className="text-[12px] text-danger leading-relaxed">{photoError}</p>
+          </div>
+        )}
+
         {/* Broken reference warnings */}
         {warnings.length > 0 && (
           <div className="bg-[#FFF8EE] border border-[#E8D5B8] rounded-input p-4 flex items-start gap-3">
@@ -370,6 +394,32 @@ export default function RecipeFormModal({
               placeholder="comma-separated"
               className="w-full bg-bg-warm border border-border rounded-input px-4 py-2.5 text-[13px] text-ink placeholder:text-ink-muted focus:outline-none focus:border-accent transition-colors"
             />
+          </div>
+        </div>
+
+        {/* Meal Types */}
+        <div>
+          <label className="block font-medium text-[12px] text-ink-light mb-1.5">Meal Types</label>
+          <div className="flex flex-wrap gap-2">
+            {MEALS.map((meal) => {
+              const Icon = MEAL_ICONS[meal];
+              const selected = mealTypes.includes(meal);
+              return (
+                <button
+                  key={meal}
+                  type="button"
+                  onClick={() => toggleMealType(meal)}
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-pill text-[12px] font-semibold border transition-all ${
+                    selected
+                      ? "bg-accent text-white border-accent"
+                      : "bg-bg-warm border-border text-ink-light hover:border-accent hover:text-accent"
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" strokeWidth={2} />
+                  {MEAL_LABELS[meal]}
+                </button>
+              );
+            })}
           </div>
         </div>
 

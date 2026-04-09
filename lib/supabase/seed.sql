@@ -55,6 +55,7 @@ create table if not exists public.recipes (
   servings integer default 4,
   time text default '',
   tags text[] default '{}',
+  meal_types text[] default '{}',
   source_url text,
   photo_path text,
   notes text,
@@ -65,6 +66,7 @@ create table if not exists public.recipes (
 -- Migrations (run if the table already exists):
 -- alter table public.recipes add column if not exists notes text;
 -- alter table public.recipes add column if not exists photo_path text;
+-- alter table public.recipes add column if not exists meal_types text[] default '{}';
 
 alter table public.recipes enable row level security;
 
@@ -333,6 +335,48 @@ create policy "Owner or member can remove"
 -- update public.recipes r
 --   set cookbook_id = (select id from public.cookbooks c where c.owner_id = r.user_id limit 1)
 --   where cookbook_id is null;
+
+-- ═══════════════════════════════════════
+-- STORAGE — recipe-photos bucket
+-- ═══════════════════════════════════════
+
+-- Create the private bucket (safe to re-run)
+insert into storage.buckets (id, name, public)
+values ('recipe-photos', 'recipe-photos', false)
+on conflict (id) do nothing;
+
+-- Anyone authenticated can upload into their own folder ({user_id}/...)
+create policy "Authenticated users can upload recipe photos"
+  on storage.objects for insert
+  to authenticated
+  with check (
+    bucket_id = 'recipe-photos'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+-- Any authenticated user can read photos (needed for cookbook sharing + signed URLs)
+create policy "Authenticated users can read recipe photos"
+  on storage.objects for select
+  to authenticated
+  using (bucket_id = 'recipe-photos');
+
+-- Users can replace/update their own photos
+create policy "Users can update own recipe photos"
+  on storage.objects for update
+  to authenticated
+  using (
+    bucket_id = 'recipe-photos'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+-- Users can delete their own photos
+create policy "Users can delete own recipe photos"
+  on storage.objects for delete
+  to authenticated
+  using (
+    bucket_id = 'recipe-photos'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
 
 -- ═══════════════════════════════════════
 -- INDEXES

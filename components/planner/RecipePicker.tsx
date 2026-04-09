@@ -5,6 +5,35 @@ import { Search, Check, ChevronLeft } from "lucide-react";
 import Modal, { ModalHeader, ModalFooter } from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
 import { DAYS, MEALS, MEAL_LABELS, SCALE_PRESETS } from "@/lib/constants";
+
+// ─── Shared row component ─────────────────────────────────────────────────────
+function RecipePickerRow({ recipe, onPick }: { recipe: Recipe; onPick: (r: Recipe) => void }) {
+  return (
+    <button
+      onClick={() => onPick(recipe)}
+      className="flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-[10px] hover:bg-accent-bg hover:border-accent/30 border border-transparent transition-all group"
+    >
+      <span className="text-[22px] leading-none flex-shrink-0">{recipe.emoji}</span>
+      <div className="flex-1 min-w-0">
+        <p className="text-[13px] font-semibold text-ink truncate group-hover:text-accent transition-colors">
+          {recipe.name}
+        </p>
+        <p className="text-[11px] text-ink-muted">
+          {recipe.servings} servings
+          {recipe.time ? ` · ${recipe.time}` : ""}
+        </p>
+      </div>
+      {recipe.tags?.slice(0, 2).map((t) => (
+        <span
+          key={t}
+          className="hidden sm:inline text-[10px] bg-bg-warm border border-border text-ink-muted px-2 py-0.5 rounded-full"
+        >
+          {t}
+        </span>
+      ))}
+    </button>
+  );
+}
 import type { Recipe, PlannerAssignment, DayName, MealType } from "@/lib/types";
 
 // ─── Add Mode ────────────────────────────────────────────────────────────────
@@ -38,15 +67,26 @@ export function RecipePickerAdd({
   const [customScale, setCustomScale] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const filtered = useMemo(() => {
-    if (!search.trim()) return recipes;
-    const q = search.toLowerCase();
-    return recipes.filter(
-      (r) =>
-        r.name.toLowerCase().includes(q) ||
-        r.tags?.some((t) => t.toLowerCase().includes(q))
-    );
-  }, [recipes, search]);
+  const { suggested, others } = useMemo(() => {
+    const base = search.trim()
+      ? (() => {
+          const q = search.toLowerCase();
+          return recipes.filter(
+            (r) =>
+              r.name.toLowerCase().includes(q) ||
+              r.tags?.some((t) => t.toLowerCase().includes(q))
+          );
+        })()
+      : recipes;
+
+    // Only split into suggested/others when not searching
+    if (!search.trim()) {
+      const s = base.filter((r) => r.meal_types?.includes(targetMealType));
+      const o = base.filter((r) => !r.meal_types?.includes(targetMealType));
+      return { suggested: s, others: o };
+    }
+    return { suggested: [], others: base };
+  }, [recipes, search, targetMealType]);
 
   function handleRecipePick(recipe: Recipe) {
     setSelectedRecipe(recipe);
@@ -143,37 +183,29 @@ export function RecipePickerAdd({
             <div className="text-center py-8 text-ink-muted text-[13px]">
               No recipes yet — add some in the Recipes tab first.
             </div>
-          ) : filtered.length === 0 ? (
+          ) : suggested.length === 0 && others.length === 0 ? (
             <div className="text-center py-8 text-ink-muted text-[13px]">
               No recipes match &ldquo;{search}&rdquo;
             </div>
           ) : (
             <div className="flex flex-col gap-1.5 max-h-[340px] overflow-y-auto pr-1">
-              {filtered.map((recipe) => (
-                <button
-                  key={recipe.id}
-                  onClick={() => handleRecipePick(recipe)}
-                  className="flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-[10px] hover:bg-accent-bg hover:border-accent/30 border border-transparent transition-all group"
-                >
-                  <span className="text-[22px] leading-none flex-shrink-0">{recipe.emoji}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-ink truncate group-hover:text-accent transition-colors">
-                      {recipe.name}
-                    </p>
-                    <p className="text-[11px] text-ink-muted">
-                      {recipe.servings} servings
-                      {recipe.time ? ` · ${recipe.time}` : ""}
-                    </p>
-                  </div>
-                  {recipe.tags?.slice(0, 2).map((t) => (
-                    <span
-                      key={t}
-                      className="hidden sm:inline text-[10px] bg-bg-warm border border-border text-ink-muted px-2 py-0.5 rounded-full"
-                    >
-                      {t}
-                    </span>
+              {suggested.length > 0 && (
+                <>
+                  <p className="text-[10px] font-semibold text-accent uppercase tracking-wider px-1 mb-0.5">
+                    Suggested for {MEAL_LABELS[targetMealType]}
+                  </p>
+                  {suggested.map((recipe) => (
+                    <RecipePickerRow key={recipe.id} recipe={recipe} onPick={handleRecipePick} />
                   ))}
-                </button>
+                  {others.length > 0 && (
+                    <p className="text-[10px] font-semibold text-ink-muted uppercase tracking-wider px-1 mt-2 mb-0.5">
+                      All Recipes
+                    </p>
+                  )}
+                </>
+              )}
+              {others.map((recipe) => (
+                <RecipePickerRow key={recipe.id} recipe={recipe} onPick={handleRecipePick} />
               ))}
             </div>
           )}

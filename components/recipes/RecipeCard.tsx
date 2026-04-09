@@ -1,7 +1,7 @@
 import { Clock, Users, List } from "lucide-react";
 import Tag from "@/components/ui/Tag";
 import RecipePhoto from "@/components/recipes/RecipePhoto";
-import { getTagColors } from "@/lib/constants";
+import { getTagColors, MEAL_ICONS, MEAL_LABELS } from "@/lib/constants";
 import type { Recipe } from "@/lib/types";
 
 interface RecipeCardProps {
@@ -58,6 +58,24 @@ export default function RecipeCard({ recipe, onClick }: RecipeCardProps) {
             <span className="text-[11px]">{recipe.ingredients.length} items</span>
           </div>
         </div>
+
+        {/* Meal type badges */}
+        {recipe.meal_types && recipe.meal_types.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {recipe.meal_types.map((meal) => {
+              const Icon = MEAL_ICONS[meal];
+              return (
+                <span
+                  key={meal}
+                  className="flex items-center gap-1 bg-accent-bg text-accent border border-accent/20 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                >
+                  <Icon className="w-2.5 h-2.5" strokeWidth={2.5} />
+                  {MEAL_LABELS[meal]}
+                </span>
+              );
+            })}
+          </div>
+        )}
 
         {/* Tags */}
         {recipe.tags && recipe.tags.length > 0 && (
