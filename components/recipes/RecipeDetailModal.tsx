@@ -54,35 +54,79 @@ export default function RecipeDetailModal({
     );
   }
 
-  // Render step text with @ingredient chips
-  function renderStepText(text: string) {
-    const parts = text.split(/(@[\w\s]+?)(?=\s|$|,|\.|@)/g);
-    return parts.map((part, i) => {
-      if (part.startsWith("@")) {
-        const name = part.slice(1).trim();
-        const ing = findIngredient(name);
-        const isValid = !!ing;
-        return (
-          <span
-            key={i}
-            className={`inline-flex items-center px-1.5 py-0.5 rounded-[6px] text-[12px] font-medium mx-0.5 ${
-              isValid
-                ? "bg-accent-bg text-herb cursor-pointer hover:bg-[#d5e5d5] transition-colors"
-                : "bg-danger-bg text-danger cursor-help"
-            }`}
-            title={
-              isValid
-                ? `${ing!.amount} ${ing!.unit} ${ing!.name}`
-                : "Broken reference — ingredient not found"
-            }
-          >
-            {name}
-            {!isValid && <AlertTriangle className="w-3 h-3 ml-1" strokeWidth={2} />}
-          </span>
-        );
+  // Render step text with @ingredient chips.
+  // Scans character-by-character so multi-word names like "olive oil" match correctly.
+  // Ingredients are tried longest-first so a name that is a prefix of another never wins early.
+  function renderStepText(text: string): React.ReactNode[] {
+    const sortedIngs = [...(recipe?.ingredients ?? [])]
+      .filter((i) => i.name.trim())
+      .sort((a, b) => b.name.length - a.name.length);
+
+    const parts: React.ReactNode[] = [];
+    let pos = 0;
+
+    while (pos < text.length) {
+      const atIdx = text.indexOf("@", pos);
+      if (atIdx === -1) {
+        parts.push(<span key={pos}>{text.slice(pos)}</span>);
+        break;
       }
-      return <span key={i}>{part}</span>;
-    });
+
+      // Plain text before the @
+      if (atIdx > pos) {
+        parts.push(<span key={pos}>{text.slice(pos, atIdx)}</span>);
+      }
+
+      // Try each ingredient name (longest first)
+      let matched = false;
+      for (const ing of sortedIngs) {
+        const end = atIdx + 1 + ing.name.length;
+        const candidate = text.slice(atIdx + 1, end);
+        if (candidate.toLowerCase() === ing.name.toLowerCase()) {
+          const nextChar = text[end];
+          // Must be followed by whitespace, punctuation, another @, or end of string
+          if (nextChar === undefined || /[\s,\.!?;@]/.test(nextChar)) {
+            parts.push(
+              <span
+                key={atIdx}
+                className="inline-flex items-center px-1.5 py-0.5 rounded-[6px] text-[12px] font-medium mx-0.5 bg-accent-bg text-herb cursor-pointer hover:bg-[#d5e5d5] transition-colors"
+                title={`${ing.amount} ${ing.unit} ${ing.name}`}
+              >
+                {candidate}
+              </span>
+            );
+            pos = end;
+            matched = true;
+            break;
+          }
+        }
+      }
+
+      if (!matched) {
+        // Not a valid ingredient ref — show as broken (grab the first word after @)
+        const brokenMatch = text.slice(atIdx).match(/^@\w+/);
+        if (brokenMatch) {
+          const name = brokenMatch[0].slice(1);
+          parts.push(
+            <span
+              key={atIdx}
+              className="inline-flex items-center px-1.5 py-0.5 rounded-[6px] text-[12px] font-medium mx-0.5 bg-danger-bg text-danger cursor-help"
+              title="Broken reference — ingredient not found"
+            >
+              {name}
+              <AlertTriangle className="w-3 h-3 ml-1" strokeWidth={2} />
+            </span>
+          );
+          pos = atIdx + brokenMatch[0].length;
+        } else {
+          // Bare @ with nothing after it — output literally
+          parts.push(<span key={atIdx}>@</span>);
+          pos = atIdx + 1;
+        }
+      }
+    }
+
+    return parts;
   }
 
   if (!recipe) return null;

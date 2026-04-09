@@ -4,7 +4,10 @@ import { useState, useEffect, useRef } from "react";
 import { Plus, X, AlertTriangle, Camera, Trash2 } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import RecipePhoto from "@/components/recipes/RecipePhoto";
-import { CATEGORIES, MEALS, MEAL_LABELS, MEAL_ICONS } from "@/lib/constants";
+import {
+  CATEGORIES, MEALS, MEAL_LABELS, MEAL_ICONS,
+  CUISINES, METHODS, TAG_GROUPS, ALL_RECIPE_TAGS,
+} from "@/lib/constants";
 import { createClient } from "@/lib/supabase/client";
 import type { Recipe, RecipeInput, IngredientInput, IngredientCategory, MealType } from "@/lib/types";
 
@@ -42,7 +45,9 @@ export default function RecipeFormModal({
   const [name, setName] = useState("");
   const [servings, setServings] = useState("4");
   const [time, setTime] = useState("");
-  const [tagsStr, setTagsStr] = useState("");
+  const [cuisines, setCuisines] = useState<string[]>([]);
+  const [methods, setMethods] = useState<string[]>([]);
+  const [recipeTags, setRecipeTags] = useState<string[]>([]);
   const [mealTypes, setMealTypes] = useState<MealType[]>([]);
   const [sourceUrl, setSourceUrl] = useState("");
   const [notes, setNotes] = useState("");
@@ -64,7 +69,14 @@ export default function RecipeFormModal({
       setName(recipe.name);
       setServings(String(recipe.servings));
       setTime(recipe.time || "");
-      setTagsStr((recipe.tags || []).join(", "));
+      const existingTags = recipe.tags || [];
+      const cuisineSet = new Set(CUISINES);
+      const methodSet  = new Set(METHODS);
+      const tagSet     = new Set(ALL_RECIPE_TAGS);
+      setCuisines(existingTags.filter((t) => cuisineSet.has(t)));
+      setMethods(existingTags.filter((t) => methodSet.has(t)));
+      // Keep structured tags + any unrecognised legacy tags
+      setRecipeTags(existingTags.filter((t) => tagSet.has(t) || (!cuisineSet.has(t) && !methodSet.has(t))));
       setMealTypes(recipe.meal_types || []);
       setSourceUrl(recipe.source_url || "");
       setNotes(recipe.notes || "");
@@ -83,7 +95,9 @@ export default function RecipeFormModal({
       setName("");
       setServings("4");
       setTime("");
-      setTagsStr("");
+      setCuisines([]);
+      setMethods([]);
+      setRecipeTags([]);
       setMealTypes([]);
       setSourceUrl("");
       setNotes("");
@@ -138,6 +152,10 @@ export default function RecipeFormModal({
     return path;
   }
 
+  function toggleItem(list: string[], setList: (v: string[]) => void, item: string) {
+    setList(list.includes(item) ? list.filter((x) => x !== item) : [...list, item]);
+  }
+
   function toggleMealType(meal: MealType) {
     setMealTypes((prev) =>
       prev.includes(meal) ? prev.filter((m) => m !== meal) : [...prev, meal]
@@ -181,21 +199,49 @@ export default function RecipeFormModal({
     setSteps((prev) => prev.filter((_, i) => i !== index));
   }
 
-  // Validate @references
+  // Validate @references.
+  // Uses the same character-scan approach as renderStepText so multi-word names
+  // like "@olive oil" are recognised as valid and don't show up as broken.
   function findBrokenRefs(): string[] {
-    const ingNames = new Set(
-      ingredients.filter((i) => i.name.trim()).map((i) => i.name.toLowerCase())
-    );
+    const sortedNames = ingredients
+      .filter((i) => i.name.trim())
+      .map((i) => i.name.toLowerCase())
+      .sort((a, b) => b.length - a.length); // longest first
+
     const broken: string[] = [];
+
     for (const step of steps) {
-      const refs = step.match(/@[\w\s]+?(?=\s|$|,|\.|@)/g) || [];
-      for (const ref of refs) {
-        const refName = ref.slice(1).trim().toLowerCase();
-        if (!ingNames.has(refName) && !broken.includes(ref)) {
-          broken.push(ref);
+      let pos = 0;
+      while (pos < step.length) {
+        const atIdx = step.indexOf("@", pos);
+        if (atIdx === -1) break;
+
+        let matched = false;
+        for (const name of sortedNames) {
+          const end = atIdx + 1 + name.length;
+          const candidate = step.slice(atIdx + 1, end).toLowerCase();
+          if (candidate === name) {
+            const nextChar = step[end];
+            if (nextChar === undefined || /[\s,\.!?;@]/.test(nextChar)) {
+              pos = end;
+              matched = true;
+              break;
+            }
+          }
+        }
+
+        if (!matched) {
+          const m = step.slice(atIdx).match(/^@\w+/);
+          if (m) {
+            if (!broken.includes(m[0])) broken.push(m[0]);
+            pos = atIdx + m[0].length;
+          } else {
+            pos = atIdx + 1;
+          }
         }
       }
     }
+
     return broken;
   }
 
@@ -224,10 +270,7 @@ export default function RecipeFormModal({
       servings: parseInt(servings) || 4,
       time: time.trim(),
       meal_types: mealTypes,
-      tags: tagsStr
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean),
+      tags: [...cuisines, ...methods, ...recipeTags],
       source_url: sourceUrl.trim(),
       notes: notes.trim(),
       ingredients: ingredients.filter((i) => i.name.trim()),
@@ -365,8 +408,8 @@ export default function RecipeFormModal({
           </div>
         </div>
 
-        {/* Servings, Time, Tags */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        {/* Servings + Time */}
+        <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block font-medium text-[12px] text-ink-light mb-1.5">Servings</label>
             <input
@@ -386,14 +429,77 @@ export default function RecipeFormModal({
               className="w-full bg-bg-warm border border-border rounded-input px-4 py-2.5 text-[13px] text-ink placeholder:text-ink-muted focus:outline-none focus:border-accent transition-colors"
             />
           </div>
-          <div className="col-span-2 sm:col-span-1">
-            <label className="block font-medium text-[12px] text-ink-light mb-1.5">Tags</label>
-            <input
-              value={tagsStr}
-              onChange={(e) => setTagsStr(e.target.value)}
-              placeholder="comma-separated"
-              className="w-full bg-bg-warm border border-border rounded-input px-4 py-2.5 text-[13px] text-ink placeholder:text-ink-muted focus:outline-none focus:border-accent transition-colors"
-            />
+        </div>
+
+        {/* Cuisine */}
+        <div>
+          <label className="block font-medium text-[12px] text-ink-light mb-1.5">Cuisine</label>
+          <div className="flex flex-wrap gap-1.5">
+            {CUISINES.map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => toggleItem(cuisines, setCuisines, c)}
+                className={`px-3 py-1 rounded-pill text-[11px] font-semibold border transition-all ${
+                  cuisines.includes(c)
+                    ? "bg-[#8A4A5A] text-white border-[#8A4A5A]"
+                    : "bg-bg-warm border-border text-ink-light hover:border-[#8A4A5A] hover:text-[#8A4A5A]"
+                }`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Method */}
+        <div>
+          <label className="block font-medium text-[12px] text-ink-light mb-1.5">Method</label>
+          <div className="flex flex-wrap gap-1.5">
+            {METHODS.map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => toggleItem(methods, setMethods, m)}
+                className={`px-3 py-1 rounded-pill text-[11px] font-semibold border transition-all ${
+                  methods.includes(m)
+                    ? "bg-[#3A5A7A] text-white border-[#3A5A7A]"
+                    : "bg-bg-warm border-border text-ink-light hover:border-[#3A5A7A] hover:text-[#3A5A7A]"
+                }`}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Tags */}
+        <div>
+          <label className="block font-medium text-[12px] text-ink-light mb-2">Tags</label>
+          <div className="space-y-3">
+            {TAG_GROUPS.map((group) => (
+              <div key={group.label}>
+                <p className="text-[10px] font-semibold text-ink-muted uppercase tracking-wider mb-1.5">
+                  {group.label}
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {group.tags.map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => toggleItem(recipeTags, setRecipeTags, tag)}
+                      className={`px-3 py-1 rounded-pill text-[11px] font-semibold border transition-all ${
+                        recipeTags.includes(tag)
+                          ? "bg-[#9A7A4A] text-white border-[#9A7A4A]"
+                          : "bg-bg-warm border-border text-ink-light hover:border-[#9A7A4A] hover:text-[#9A7A4A]"
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
