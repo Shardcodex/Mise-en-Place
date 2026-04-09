@@ -8,10 +8,12 @@ export function usePlanner() {
   const [assignments, setAssignments] = useState<PlannerAssignment[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const supabase = createClient();
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setError(null);
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -20,27 +22,33 @@ export function usePlanner() {
       return;
     }
 
-    const [{ data: assignmentsData }, { data: profileData }] =
-      await Promise.all([
-        supabase
-          .from("planner_assignments")
-          .select(
-            `
+    const [
+      { data: assignmentsData, error: assignErr },
+      { data: profileData, error: profileErr },
+    ] = await Promise.all([
+      supabase
+        .from("planner_assignments")
+        .select(
+          `
+            *,
+            recipe:recipes (
               *,
-              recipe:recipes (
-                *,
-                ingredients ( * ),
-                steps ( * )
-              )
-            `
-          )
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: true }),
-        supabase.from("profiles").select("*").eq("id", user.id).single(),
-      ]);
+              ingredients ( * ),
+              steps ( * )
+            )
+          `
+        )
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: true }),
+      supabase.from("profiles").select("*").eq("id", user.id).single(),
+    ]);
 
-    if (assignmentsData) setAssignments(assignmentsData);
-    if (profileData) setProfile(profileData);
+    if (assignErr || profileErr) {
+      setError("Failed to load planner. Please try again.");
+    } else {
+      if (assignmentsData) setAssignments(assignmentsData);
+      if (profileData) setProfile(profileData);
+    }
     setLoading(false);
   }, [supabase]);
 
@@ -107,6 +115,7 @@ export function usePlanner() {
     assignments,
     profile,
     loading,
+    error,
     fetchData,
     addAssignment,
     updateAssignment,

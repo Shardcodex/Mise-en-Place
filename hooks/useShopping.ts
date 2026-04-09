@@ -100,12 +100,14 @@ export function useShopping() {
   const [assignments, setAssignments] = useState<PlannerAssignment[]>([]);
   const [checks, setChecks] = useState<ShoppingCheck[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const supabase = createClient();
 
   // ── Fetch ──────────────────────────────────────────────────────────────────
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setError(null);
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -114,30 +116,35 @@ export function useShopping() {
       return;
     }
 
-    const [{ data: assignmentsData }, { data: checksData }] = await Promise.all(
-      [
-        supabase
-          .from("planner_assignments")
-          .select(
-            `
+    const [
+      { data: assignmentsData, error: assignErr },
+      { data: checksData, error: checksErr },
+    ] = await Promise.all([
+      supabase
+        .from("planner_assignments")
+        .select(
+          `
+            *,
+            recipe:recipes (
               *,
-              recipe:recipes (
-                *,
-                ingredients ( * ),
-                steps ( * )
-              )
-            `
-          )
-          .eq("user_id", user.id),
-        supabase
-          .from("shopping_checks")
-          .select("*")
-          .eq("user_id", user.id),
-      ]
-    );
+              ingredients ( * ),
+              steps ( * )
+            )
+          `
+        )
+        .eq("user_id", user.id),
+      supabase
+        .from("shopping_checks")
+        .select("*")
+        .eq("user_id", user.id),
+    ]);
 
-    if (assignmentsData) setAssignments(assignmentsData);
-    if (checksData) setChecks(checksData);
+    if (assignErr || checksErr) {
+      setError("Failed to load shopping list. Please try again.");
+    } else {
+      if (assignmentsData) setAssignments(assignmentsData);
+      if (checksData) setChecks(checksData);
+    }
     setLoading(false);
   }, [supabase]);
 
@@ -238,6 +245,7 @@ export function useShopping() {
     checkedCount,
     totalCount,
     loading,
+    error,
     fetchData,
     toggleCheck,
     clearChecked,

@@ -7,14 +7,16 @@ import type { Recipe, RecipeInput, Ingredient, Step } from "@/lib/types";
 export function useRecipes() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const supabase = createClient();
 
   const fetchRecipes = useCallback(async () => {
     setLoading(true);
+    setError(null);
     const { data: user } = await supabase.auth.getUser();
-    if (!user.user) return;
+    if (!user.user) { setLoading(false); return; }
 
-    const { data, error } = await supabase
+    const { data, error: fetchError } = await supabase
       .from("recipes")
       .select(`
         *,
@@ -24,7 +26,9 @@ export function useRecipes() {
       .eq("user_id", user.user.id)
       .order("created_at", { ascending: false });
 
-    if (!error && data) {
+    if (fetchError) {
+      setError("Failed to load recipes. Please try again.");
+    } else if (data) {
       // Sort ingredients and steps by sort_order
       const sorted = data.map((r: any) => ({
         ...r,
@@ -155,5 +159,5 @@ export function useRecipes() {
     return true;
   }
 
-  return { recipes, loading, fetchRecipes, createRecipe, updateRecipe, deleteRecipe };
+  return { recipes, loading, error, fetchRecipes, createRecipe, updateRecipe, deleteRecipe };
 }
