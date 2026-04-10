@@ -85,6 +85,12 @@ interface RecipePhotoProps {
    * - "full"            — 960 px wide, for the detail modal banner
    */
   size?: PhotoSize;
+  /**
+   * CSS object-position value for controlling the focal point of the crop.
+   * e.g. "center", "top", "bottom", "top left", "center right"
+   * Defaults to "center".
+   */
+  focus?: string | null;
   className?: string;
   alt?: string;
 }
@@ -94,6 +100,7 @@ export default function RecipePhoto({
   emoji,
   cover = false,
   size = "thumb",
+  focus = "center",
   className = "",
   alt = "",
 }: RecipePhotoProps) {
@@ -120,7 +127,8 @@ export default function RecipePhoto({
         alt={alt}
         loading="lazy"
         decoding="async"
-        className={`${cover ? "w-full h-full object-cover object-center" : ""} ${className}`}
+        className={`${cover ? "w-full h-full object-cover" : ""} ${className}`}
+        style={cover ? { objectPosition: focus ?? "center" } : undefined}
       />
     );
   }

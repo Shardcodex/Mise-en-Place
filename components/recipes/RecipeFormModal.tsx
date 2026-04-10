@@ -61,6 +61,7 @@ export default function RecipeFormModal({
   const [existingPhotoPath, setExistingPhotoPath] = useState<string | null>(null);
   const [newPhotoFile, setNewPhotoFile] = useState<File | null>(null);
   const [newPhotoPreview, setNewPhotoPreview] = useState<string | null>(null);
+  const [photoFocus, setPhotoFocus] = useState<string>("center");
 
   // Populate form when editing
   useEffect(() => {
@@ -81,6 +82,7 @@ export default function RecipeFormModal({
       setSourceUrl(recipe.source_url || "");
       setNotes(recipe.notes || "");
       setExistingPhotoPath(recipe.photo_path || null);
+      setPhotoFocus(recipe.photo_focus || "center");
       setIngredients(
         recipe.ingredients.map((i) => ({
           name: i.name,
@@ -267,6 +269,7 @@ export default function RecipeFormModal({
       name: name.trim(),
       emoji,
       photo_path: finalPhotoPath,
+      photo_focus: photoFocus,
       servings: parseInt(servings) || 4,
       time: time.trim(),
       meal_types: mealTypes,
@@ -394,6 +397,43 @@ export default function RecipeFormModal({
               className="hidden"
               onChange={handleFileChange}
             />
+
+            {/* Focal point picker — only shown when a photo exists */}
+            {(existingPhotoPath || newPhotoPreview) && (() => {
+              const positions = [
+                { value: "top left",     label: "↖" },
+                { value: "top",          label: "↑" },
+                { value: "top right",    label: "↗" },
+                { value: "left",         label: "←" },
+                { value: "center",       label: "·" },
+                { value: "right",        label: "→" },
+                { value: "bottom left",  label: "↙" },
+                { value: "bottom",       label: "↓" },
+                { value: "bottom right", label: "↘" },
+              ];
+              return (
+                <div className="mt-1.5">
+                  <p className="text-[9px] font-medium text-ink-muted uppercase tracking-[0.15em] mb-1">Focus</p>
+                  <div className="grid grid-cols-3 gap-0.5 w-[72px]">
+                    {positions.map((pos) => (
+                      <button
+                        key={pos.value}
+                        type="button"
+                        title={pos.value}
+                        onClick={() => setPhotoFocus(pos.value)}
+                        className={`w-[22px] h-[22px] rounded-[4px] flex items-center justify-center text-[10px] transition-colors ${
+                          photoFocus === pos.value
+                            ? "bg-accent text-white"
+                            : "bg-bg-warm text-ink-muted hover:bg-border"
+                        }`}
+                      >
+                        {pos.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
 
           {/* Recipe name */}

@@ -85,6 +85,7 @@ export interface Recipe {
   name: string;
   emoji: string;
   photo_path: string | null;
+  photo_focus: string | null;
   servings: number;
   time: string;
   tags: string[];
@@ -137,6 +138,7 @@ export interface RecipeInput {
   emoji: string;
   cookbook_id?: string | null;
   photo_path?: string | null;
+  photo_focus?: string | null;
   servings: number;
   time: string;
   tags: string[];

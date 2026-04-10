@@ -150,6 +150,7 @@ export default function RecipeDetailModal({
           emoji={recipe.emoji}
           cover
           size="full"
+          focus={recipe.photo_focus}
           alt={recipe.name}
         />
         <button

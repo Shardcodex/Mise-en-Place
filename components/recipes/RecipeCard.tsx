@@ -26,6 +26,7 @@ export default function RecipeCard({ recipe, onClick }: RecipeCardProps) {
           photoPath={recipe.photo_path}
           emoji={recipe.emoji}
           cover
+          focus={recipe.photo_focus}
         />
         {/* Colored accent bar along the bottom of the photo area */}
         <div

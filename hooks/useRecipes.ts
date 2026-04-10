@@ -74,6 +74,7 @@ export function useRecipes(cookbookId?: string | null) {
         meal_types: input.meal_types ?? [],
         source_url: input.source_url || null,
         photo_path: input.photo_path ?? null,
+        photo_focus: input.photo_focus ?? null,
         notes: input.notes || null,
         cookbook_id: input.cookbook_id ?? cookbookId ?? null,
       })
@@ -129,6 +130,7 @@ export function useRecipes(cookbookId?: string | null) {
         meal_types: input.meal_types ?? [],
         source_url: input.source_url || null,
         photo_path: input.photo_path ?? null,
+        photo_focus: input.photo_focus ?? null,
         notes: input.notes || null,
         updated_at: new Date().toISOString(),
       })
