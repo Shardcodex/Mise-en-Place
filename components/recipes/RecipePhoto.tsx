@@ -32,7 +32,7 @@ async function resolveSignedUrl(
   photoPath: string,
   size: PhotoSize
 ): Promise<string | null> {
-  const cacheKey = `v2::${photoPath}::${size}`;
+  const cacheKey = `v3::${photoPath}::${size}`;
   const cached = urlCache.get(cacheKey);
 
   // Return cached URL if it still has more than CACHE_REFRESH_BUFFER_MS left
@@ -47,7 +47,9 @@ async function resolveSignedUrl(
   const transformResult = await supabase.storage
     .from(BUCKET)
     .createSignedUrl(photoPath, SIGNED_URL_TTL, {
-      transform: { width, quality: 80 },
+      // "contain" scales to the target width while preserving aspect ratio —
+      // no server-side crop. CSS object-cover + objectPosition handle display cropping.
+      transform: { width, quality: 80, resize: "contain" },
     });
 
   if (!transformResult.error && transformResult.data?.signedUrl) {
