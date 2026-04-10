@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { usePlanner } from "@/hooks/usePlanner";
 import { useRecipes } from "@/hooks/useRecipes";
@@ -55,9 +55,6 @@ function formatWeekRange(weekDates: Record<DayName, Date>): string {
 
 export default function PlannerView() {
   const { activeCookbook } = useCookbookContext();
-  const { assignments, profile, loading, error, fetchData, addAssignment, updateAssignment, removeAssignment } =
-    usePlanner();
-  const { recipes } = useRecipes(activeCookbook?.id);
   const { showToast } = useToast();
 
   const [weekOffset, setWeekOffset] = useState(0);
@@ -68,9 +65,32 @@ export default function PlannerView() {
   const [editOpen, setEditOpen] = useState(false);
   const [editAssignment, setEditAssignment] = useState<PlannerAssignment | null>(null);
 
-  const weekStartDay: DayName = profile?.week_start_day ?? "Monday";
+  // weekStartDay is held in state so it can be initialised before profile loads
+  // (defaults to Monday; synced from profile once it arrives)
+  const [weekStartDay, setWeekStartDay] = useState<DayName>("Monday");
   const orderedDays = useMemo(() => getOrderedDays(weekStartDay), [weekStartDay]);
   const weekDates = useMemo(() => getWeekDates(weekOffset, weekStartDay), [weekOffset, weekStartDay]);
+
+  // ISO date (YYYY-MM-DD, local time) of the first day of the displayed week
+  const weekStartDate = useMemo(() => {
+    const d = weekDates[weekStartDay];
+    const y = d.getFullYear();
+    const mo = String(d.getMonth() + 1).padStart(2, "0");
+    const dy = String(d.getDate()).padStart(2, "0");
+    return `${y}-${mo}-${dy}`;
+  }, [weekDates, weekStartDay]);
+
+  // usePlanner needs weekStartDate to scope the DB query — must be called after weekStartDate
+  const { assignments, profile, loading, error, fetchData, addAssignment, updateAssignment, removeAssignment } =
+    usePlanner(weekStartDate);
+  const { recipes } = useRecipes(activeCookbook?.id);
+
+  // Once profile loads, sync the user's preferred week-start day
+  useEffect(() => {
+    if (profile?.week_start_day) {
+      setWeekStartDay(profile.week_start_day as DayName);
+    }
+  }, [profile?.week_start_day]);
 
   const weekLabel = useMemo(() => {
     if (weekOffset === 0) return "This Week";

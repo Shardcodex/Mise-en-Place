@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { PlannerAssignment, Profile, DayName, MealType } from "@/lib/types";
 
-export function usePlanner() {
+export function usePlanner(weekStartDate: string) {
   const [assignments, setAssignments] = useState<PlannerAssignment[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,6 +39,7 @@ export function usePlanner() {
           `
         )
         .eq("user_id", user.id)
+        .eq("week_start_date", weekStartDate)
         .order("created_at", { ascending: true }),
       supabase.from("profiles").select("*").eq("id", user.id).single(),
     ]);
@@ -54,7 +55,7 @@ export function usePlanner() {
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+  }, [fetchData, weekStartDate]);
 
   async function addAssignment(
     recipe_id: string,
@@ -73,6 +74,7 @@ export function usePlanner() {
       day,
       meal_type,
       scale,
+      week_start_date: weekStartDate,
     });
     if (error) {
       console.error("addAssignment error:", error);

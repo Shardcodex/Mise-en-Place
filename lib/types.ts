@@ -104,6 +104,7 @@ export interface PlannerAssignment {
   day: DayName;
   meal_type: MealType;
   scale: number;
+  week_start_date: string; // ISO date (YYYY-MM-DD) of the Monday/Sunday that starts this week
   created_at: string;
   recipe?: Recipe;
 }

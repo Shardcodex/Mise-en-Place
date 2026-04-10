@@ -175,8 +175,12 @@ create table if not exists public.planner_assignments (
   day text not null check (day in ('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday')),
   meal_type text not null check (meal_type in ('breakfast','lunch','dinner','snack')),
   scale numeric default 1.0,
+  week_start_date date not null default current_date,
   created_at timestamptz default now()
 );
+
+-- Migration for existing databases: add week_start_date column
+-- alter table public.planner_assignments add column if not exists week_start_date date not null default current_date;
 
 alter table public.planner_assignments enable row level security;
 
