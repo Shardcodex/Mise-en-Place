@@ -120,7 +120,7 @@ export default function RecipePhoto({
         alt={alt}
         loading="lazy"
         decoding="async"
-        className={`${cover ? "w-full h-full object-cover" : ""} ${className}`}
+        className={`${cover ? "w-full h-full object-cover object-center" : ""} ${className}`}
       />
     );
   }

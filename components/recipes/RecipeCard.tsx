@@ -21,7 +21,7 @@ export default function RecipeCard({ recipe, onClick }: RecipeCardProps) {
       className="bg-bg-card border border-border rounded-card overflow-hidden cursor-pointer group transition-all duration-300 hover:-translate-y-[2px] hover:shadow-card"
     >
       {/* Photo strip — full width cover, falls back to emoji on warm background */}
-      <div className="h-[140px] w-full overflow-hidden relative">
+      <div className="aspect-[16/9] w-full overflow-hidden relative">
         <RecipePhoto
           photoPath={recipe.photo_path}
           emoji={recipe.emoji}
