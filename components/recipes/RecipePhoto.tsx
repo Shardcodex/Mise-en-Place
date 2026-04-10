@@ -32,7 +32,7 @@ async function resolveSignedUrl(
   photoPath: string,
   size: PhotoSize
 ): Promise<string | null> {
-  const cacheKey = `${photoPath}::${size}`;
+  const cacheKey = `v2::${photoPath}::${size}`;
   const cached = urlCache.get(cacheKey);
 
   // Return cached URL if it still has more than CACHE_REFRESH_BUFFER_MS left
@@ -120,7 +120,7 @@ export default function RecipePhoto({
         alt={alt}
         loading="lazy"
         decoding="async"
-        className={`${cover ? "w-full h-full object-cover object-top" : ""} ${className}`}
+        className={`${cover ? "w-full h-full object-cover object-center" : ""} ${className}`}
       />
     );
   }
