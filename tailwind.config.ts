@@ -9,34 +9,23 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // ── Rouxtine Brand Palette ─────────────────────────────────────
         bg: {
-          DEFAULT: "#F2F2EE",
-          warm: "#E8E6E0",
-          card: "#FEFEFE",
+          DEFAULT: "#F7F5F2",   // Ivoire — app background
+          warm: "#EEECEA",      // slightly deeper surface
+          card: "#FFFFFF",      // Blanc — card surfaces
         },
         ink: {
-          DEFAULT: "#2D3436",
-          light: "#5A625A",
-          muted: "#8A928A",
+          DEFAULT: "#0F0F0F",   // Noir — primary text
+          light: "#444444",     // Darkgrey — secondary text
+          muted: "#888888",     // Gris — metadata, placeholders
         },
         accent: {
-          DEFAULT: "#5E7E6B",
-          light: "#A3B8A0",
-          bg: "#EAF0EA",
+          DEFAULT: "#E8200F",   // Rouge Vif — CTAs, highlights
+          light: "#F5A099",     // tinted rouge for hover indicators
+          bg: "#FDF0EE",        // very light rouge tint for active backgrounds
         },
-        herb: {
-          DEFAULT: "#3D5E4B",
-          light: "#EAF0EA",
-        },
-        berry: {
-          DEFAULT: "#8A4A5A",
-          light: "#F0E8EA",
-        },
-        honey: {
-          DEFAULT: "#9A7A4A",
-          light: "#F5EDE0",
-        },
-        border: "#D8DBD8",
+        border: "#E5E3DF",      // Gris Clair — dividers, input borders
         danger: {
           DEFAULT: "#BB4444",
           bg: "#FFF0F0",
@@ -44,15 +33,17 @@ const config: Config = {
       },
       fontFamily: {
         sans: [
-          "var(--font-work-sans)",
+          "var(--font-dm-sans)",
           "-apple-system",
           "BlinkMacSystemFont",
           "Segoe UI",
           "Roboto",
-          "Oxygen",
-          "Ubuntu",
-          "Cantarell",
           "sans-serif",
+        ],
+        display: [
+          "var(--font-playfair)",
+          "Georgia",
+          "serif",
         ],
       },
       borderRadius: {
@@ -61,11 +52,11 @@ const config: Config = {
         pill: "50px",
       },
       boxShadow: {
-        card: "0 8px 24px rgba(45, 52, 54, 0.08)",
-        "card-hover": "0 12px 32px rgba(45, 52, 54, 0.12)",
-        modal: "0 20px 60px rgba(45, 52, 54, 0.15)",
-        toast: "0 8px 24px rgba(61, 94, 75, 0.25)",
-        button: "0 4px 12px rgba(94, 126, 107, 0.25)",
+        card: "0 8px 24px rgba(15, 15, 15, 0.07)",
+        "card-hover": "0 12px 32px rgba(15, 15, 15, 0.11)",
+        modal: "0 20px 60px rgba(15, 15, 15, 0.14)",
+        toast: "0 8px 24px rgba(232, 32, 15, 0.20)",
+        button: "0 4px 12px rgba(232, 32, 15, 0.22)",
       },
       keyframes: {
         "slide-up": {

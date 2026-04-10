@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { ChefHat, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 
 export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -54,14 +54,20 @@ export default function LoginPage() {
       <div className="w-full max-w-[400px]">
         {/* Logo */}
         <div className="text-center mb-10">
-          <div className="w-16 h-16 rounded-full bg-accent-bg flex items-center justify-center mx-auto mb-4">
-            <ChefHat className="w-8 h-8 text-accent" strokeWidth={1.5} />
+          {/* Ladle mark */}
+          <div className="w-16 h-16 rounded-full bg-ink flex items-center justify-center mx-auto mb-5">
+            <svg width="32" height="32" viewBox="0 0 44 44" fill="none" aria-hidden="true">
+              <circle cx="16" cy="14" r="9" stroke="#FFFFFF" strokeWidth="2" fill="none"/>
+              <line x1="22" y1="20" x2="38" y2="38" stroke="#E8200F" strokeWidth="2.5" strokeLinecap="round"/>
+              <circle cx="16" cy="14" r="4" fill="#E8200F" opacity="0.35"/>
+            </svg>
           </div>
-          <h1 className="font-semibold text-[22px] tracking-[-0.02em] text-ink lowercase">
-            mise en place
+          {/* Wordmark */}
+          <h1 className="font-display font-bold text-[28px] tracking-[-0.02em] text-ink leading-none">
+            Roux<em className="italic text-accent">tine</em>
           </h1>
-          <p className="text-[13px] text-ink-muted mt-1">
-            your kitchen companion
+          <p className="text-[13px] text-ink-muted mt-2">
+            The foundation of every great meal.
           </p>
         </div>
 
@@ -127,7 +133,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-accent text-white rounded-pill py-3 text-[13px] font-semibold hover:-translate-y-[1px] hover:shadow-button transition-all disabled:opacity-50 disabled:hover:translate-y-0"
+              className="w-full flex items-center justify-center gap-2 bg-accent text-white rounded-pill py-3 text-[13px] font-medium tracking-wide hover:-translate-y-[1px] hover:shadow-button transition-all disabled:opacity-50 disabled:hover:translate-y-0"
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

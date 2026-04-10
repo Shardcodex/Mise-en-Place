@@ -19,10 +19,19 @@ export default function Sidebar() {
     <aside className="hidden md:flex flex-col w-[220px] min-h-screen bg-bg-card border-r border-border shrink-0">
       {/* Logo */}
       <div className="px-6 pt-8 pb-6">
-        <h1 className="font-semibold text-[14px] tracking-[-0.02em] text-ink lowercase leading-tight">
-          mise en place
-        </h1>
-        <p className="text-[10px] text-ink-muted mt-1">your kitchen companion</p>
+        <div className="flex items-center gap-2.5">
+          {/* Ladle icon */}
+          <svg width="28" height="28" viewBox="0 0 44 44" fill="none" aria-hidden="true">
+            <circle cx="16" cy="14" r="9" stroke="#0F0F0F" strokeWidth="2" fill="none"/>
+            <line x1="22" y1="20" x2="38" y2="38" stroke="#E8200F" strokeWidth="2.5" strokeLinecap="round"/>
+            <circle cx="16" cy="14" r="4" fill="#E8200F" opacity="0.18"/>
+          </svg>
+          {/* Wordmark: Roux (bold) + tine (bold italic red) */}
+          <h1 className="font-display font-bold text-[18px] leading-none tracking-[-0.02em] text-ink">
+            Roux<em className="not-italic italic text-accent">tine</em>
+          </h1>
+        </div>
+        <p className="text-[10px] text-ink-muted mt-2 pl-[36px]">The foundation of every great meal.</p>
       </div>
 
       {/* Nav */}
@@ -37,7 +46,7 @@ export default function Sidebar() {
               className={`flex items-center gap-3 px-3 py-2.5 rounded-[10px] cursor-pointer transition-all duration-200 ${
                 active
                   ? "bg-accent-bg text-accent font-semibold"
-                  : "text-ink-muted hover:text-ink-light hover:bg-[#F5F5F2]"
+                  : "text-ink-muted hover:text-ink-light hover:bg-bg-warm"
               }`}
             >
               <Icon className="w-4 h-4" strokeWidth={2} />
