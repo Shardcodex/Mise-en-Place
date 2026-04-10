@@ -346,19 +346,38 @@ export default function RecipeFormModal({
         <div className="flex items-start gap-4">
           {/* Photo upload area */}
           <div className="shrink-0">
-            <label className="block font-medium text-[12px] text-ink-light mb-1.5">Photo</label>
-            <div className="relative w-24 h-24 rounded-[14px] overflow-hidden border border-border">
+            <label className="block font-medium text-[12px] text-ink-light mb-1.5">
+              Photo
+              {hasPhoto && (
+                <span className="ml-1.5 font-normal text-ink-muted">· click to focus</span>
+              )}
+            </label>
+
+            {/* Photo container — clickable for focus when photo present */}
+            <div
+              className="relative w-24 h-24 rounded-[14px] overflow-hidden border border-border group/photo"
+              style={{ cursor: hasPhoto ? "crosshair" : "default" }}
+              onClick={(e) => {
+                if (!hasPhoto) return;
+                const rect = e.currentTarget.getBoundingClientRect();
+                const x = Math.round(((e.clientX - rect.left) / rect.width) * 100);
+                const y = Math.round(((e.clientY - rect.top) / rect.height) * 100);
+                setPhotoFocus(`${x}% ${y}%`);
+              }}
+            >
               {newPhotoPreview ? (
                 <img
                   src={newPhotoPreview}
                   alt=""
                   className="w-full h-full object-cover"
+                  style={{ objectPosition: photoFocus }}
                 />
               ) : existingPhotoPath ? (
                 <RecipePhoto
                   photoPath={existingPhotoPath}
                   emoji={emoji}
                   cover
+                  focus={photoFocus}
                 />
               ) : (
                 <div className="w-full h-full bg-[#F0EDE8] flex flex-col items-center justify-center gap-1">
@@ -367,24 +386,44 @@ export default function RecipeFormModal({
                 </div>
               )}
 
-              {/* Overlay buttons */}
-              <div className="absolute inset-0 flex items-center justify-center gap-1.5 opacity-0 hover:opacity-100 transition-opacity bg-black/30">
+              {/* Focal point dot — shows where focus is pinned */}
+              {hasPhoto && (() => {
+                const match = photoFocus.match(/^(\d+)%\s+(\d+)%$/);
+                const named: Record<string, [number, number]> = {
+                  center: [50, 50], top: [50, 0], bottom: [50, 100],
+                  left: [0, 50], right: [100, 50],
+                  "top left": [0, 0], "top right": [100, 0],
+                  "bottom left": [0, 100], "bottom right": [100, 100],
+                };
+                const [fx, fy] = match
+                  ? [parseInt(match[1]), parseInt(match[2])]
+                  : named[photoFocus] ?? [50, 50];
+                return (
+                  <div
+                    className="absolute w-4 h-4 rounded-full border-2 border-white shadow bg-accent pointer-events-none"
+                    style={{ left: `${fx}%`, top: `${fy}%`, transform: "translate(-50%, -50%)" }}
+                  />
+                );
+              })()}
+
+              {/* Corner action buttons — stop propagation so they don't set focus */}
+              <div className="absolute top-1.5 right-1.5 flex gap-1 opacity-0 group-hover/photo:opacity-100 transition-opacity">
                 <button
                   type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-7 h-7 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-colors"
+                  onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                  className="w-6 h-6 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 transition-colors"
                   title="Upload photo"
                 >
-                  <Camera className="w-3.5 h-3.5 text-ink" strokeWidth={2} />
+                  <Camera className="w-3 h-3 text-white" strokeWidth={2} />
                 </button>
                 {hasPhoto && (
                   <button
                     type="button"
-                    onClick={handleRemovePhoto}
-                    className="w-7 h-7 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-colors"
+                    onClick={(e) => { e.stopPropagation(); handleRemovePhoto(); }}
+                    className="w-6 h-6 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 transition-colors"
                     title="Remove photo"
                   >
-                    <Trash2 className="w-3.5 h-3.5 text-danger" strokeWidth={2} />
+                    <Trash2 className="w-3 h-3 text-white" strokeWidth={2} />
                   </button>
                 )}
               </div>
@@ -397,43 +436,6 @@ export default function RecipeFormModal({
               className="hidden"
               onChange={handleFileChange}
             />
-
-            {/* Focal point picker — only shown when a photo exists */}
-            {(existingPhotoPath || newPhotoPreview) && (() => {
-              const positions = [
-                { value: "top left",     label: "↖" },
-                { value: "top",          label: "↑" },
-                { value: "top right",    label: "↗" },
-                { value: "left",         label: "←" },
-                { value: "center",       label: "·" },
-                { value: "right",        label: "→" },
-                { value: "bottom left",  label: "↙" },
-                { value: "bottom",       label: "↓" },
-                { value: "bottom right", label: "↘" },
-              ];
-              return (
-                <div className="mt-1.5">
-                  <p className="text-[9px] font-medium text-ink-muted uppercase tracking-[0.15em] mb-1">Focus</p>
-                  <div className="grid grid-cols-3 gap-0.5 w-[72px]">
-                    {positions.map((pos) => (
-                      <button
-                        key={pos.value}
-                        type="button"
-                        title={pos.value}
-                        onClick={() => setPhotoFocus(pos.value)}
-                        className={`w-[22px] h-[22px] rounded-[4px] flex items-center justify-center text-[10px] transition-colors ${
-                          photoFocus === pos.value
-                            ? "bg-accent text-white"
-                            : "bg-bg-warm text-ink-muted hover:bg-border"
-                        }`}
-                      >
-                        {pos.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              );
-            })()}
           </div>
 
           {/* Recipe name */}
