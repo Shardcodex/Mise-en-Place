@@ -149,6 +149,7 @@ export default function RecipeDetailModal({
           photoPath={recipe.photo_path}
           emoji={recipe.emoji}
           cover
+          size="full"
           alt={recipe.name}
         />
         <button

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Work_Sans } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 
 const workSans = Work_Sans({
@@ -41,7 +42,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={workSans.variable}>
-      <body className="font-sans">{children}</body>
+      <body className="font-sans">
+        {children}
+        <Script
+          src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"
+          strategy="lazyOnload"
+        />
+      </body>
     </html>
   );
 }

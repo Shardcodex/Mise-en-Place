@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { usePlanner } from "@/hooks/usePlanner";
 import { useRecipes } from "@/hooks/useRecipes";
 import { useToast } from "@/components/layout/Toast";
+import { useCookbookContext } from "@/contexts/CookbookContext";
 import DayCard from "@/components/planner/DayCard";
 import { RecipePickerAdd, RecipePickerEdit } from "@/components/planner/RecipePicker";
 import { DayCardSkeleton } from "@/components/ui/Skeleton";
@@ -53,9 +54,10 @@ function formatWeekRange(weekDates: Record<DayName, Date>): string {
 // ─── View ──────────────────────────────────────────────────────────────────────
 
 export default function PlannerView() {
+  const { activeCookbook } = useCookbookContext();
   const { assignments, profile, loading, error, fetchData, addAssignment, updateAssignment, removeAssignment } =
     usePlanner();
-  const { recipes } = useRecipes();
+  const { recipes } = useRecipes(activeCookbook?.id);
   const { showToast } = useToast();
 
   const [weekOffset, setWeekOffset] = useState(0);
