@@ -53,7 +53,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 ? "bg-danger text-white"
                 : toast.type === "info"
                 ? "bg-ink text-white"
-                : "bg-herb text-white"
+                : "bg-green-700 text-white"
             }`}
           >
             {toast.type === "error" ? (

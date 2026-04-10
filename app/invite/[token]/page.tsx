@@ -66,7 +66,7 @@ export default function InvitePage() {
 
         {state === "success" && (
           <>
-            <CheckCircle className="w-10 h-10 text-herb mx-auto mb-4" strokeWidth={1.5} />
+            <CheckCircle className="w-10 h-10 text-green-700 mx-auto mb-4" strokeWidth={1.5} />
             <h1 className="font-bold text-[18px] text-ink mb-2">You&apos;re in!</h1>
             <p className="text-[13px] text-ink-muted">
               You&apos;ve joined the cookbook. Redirecting you now…

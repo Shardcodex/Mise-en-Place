@@ -314,9 +314,9 @@ export default function RecipeFormModal({
         {/* Broken reference warnings */}
         {warnings.length > 0 && (
           <div className="bg-[#FFF8EE] border border-[#E8D5B8] rounded-input p-4 flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-honey shrink-0 mt-0.5" strokeWidth={2} />
+            <AlertTriangle className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" strokeWidth={2} />
             <div>
-              <p className="font-semibold text-[13px] text-honey mb-1">
+              <p className="font-semibold text-[13px] text-amber-700 mb-1">
                 Broken ingredient references found
               </p>
               <p className="text-[12px] text-[#8A7A5A] leading-relaxed">
@@ -326,7 +326,7 @@ export default function RecipeFormModal({
                 {warnings.map((w) => (
                   <span
                     key={w}
-                    className="bg-honey-light text-honey rounded-pill px-2.5 py-0.5 text-[11px] font-medium"
+                    className="bg-amber-50 text-amber-700 rounded-pill px-2.5 py-0.5 text-[11px] font-medium"
                   >
                     {w}
                   </span>
@@ -558,7 +558,7 @@ export default function RecipeFormModal({
             <label className="font-medium text-[12px] text-ink-light">Ingredients</label>
             <button
               onClick={addIngredient}
-              className="flex items-center gap-1 text-accent text-[11px] font-semibold hover:text-herb transition-colors"
+              className="flex items-center gap-1 text-accent text-[11px] font-semibold hover:text-green-700 transition-colors"
             >
               <Plus className="w-3 h-3" strokeWidth={2.5} />
               Add ingredient
@@ -623,7 +623,7 @@ export default function RecipeFormModal({
             <label className="font-medium text-[12px] text-ink-light">Steps</label>
             <button
               onClick={addStep}
-              className="flex items-center gap-1 text-accent text-[11px] font-semibold hover:text-herb transition-colors"
+              className="flex items-center gap-1 text-accent text-[11px] font-semibold hover:text-green-700 transition-colors"
             >
               <Plus className="w-3 h-3" strokeWidth={2.5} />
               Add step

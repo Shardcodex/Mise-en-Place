@@ -33,7 +33,7 @@ export default function RecipeChip({
 
       {/* Scale badge — only shown when scale ≠ 1 */}
       {assignment.scale !== 1 && (
-        <span className="flex-shrink-0 bg-honey-light text-honey text-[10px] font-semibold px-1.5 py-0.5 rounded-full leading-none">
+        <span className="flex-shrink-0 bg-amber-50 text-amber-700 text-[10px] font-semibold px-1.5 py-0.5 rounded-full leading-none">
           ×{assignment.scale % 1 === 0 ? assignment.scale : assignment.scale}
         </span>
       )}

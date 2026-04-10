@@ -47,7 +47,7 @@ async function resolveSignedUrl(
   const transformResult = await supabase.storage
     .from(BUCKET)
     .createSignedUrl(photoPath, SIGNED_URL_TTL, {
-      transform: { width, resize: "cover", quality: 80 },
+      transform: { width, quality: 80 },
     });
 
   if (!transformResult.error && transformResult.data?.signedUrl) {

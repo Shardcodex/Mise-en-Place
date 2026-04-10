@@ -125,7 +125,7 @@ export default function LoginPage() {
             )}
 
             {message && (
-              <div className="bg-accent-bg border border-accent/20 rounded-input px-4 py-2.5 text-[12px] text-herb">
+              <div className="bg-accent-bg border border-accent/20 rounded-input px-4 py-2.5 text-[12px] text-green-700">
                 {message}
               </div>
             )}

@@ -130,8 +130,8 @@ export default function PasteImportModal({
         {parsed && (
           <div className="bg-[#F8F8F5] rounded-card p-5 border border-[#E8E6E0]">
             <div className="flex items-center gap-2 mb-3">
-              <CheckCircle2 className="w-5 h-5 text-herb" strokeWidth={2} />
-              <span className="font-semibold text-[13px] text-herb">
+              <CheckCircle2 className="w-5 h-5 text-green-700" strokeWidth={2} />
+              <span className="font-semibold text-[13px] text-green-700">
                 Recipe detected!
               </span>
             </div>

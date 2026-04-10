@@ -89,7 +89,7 @@ export default function RecipeDetailModal({
             parts.push(
               <span
                 key={atIdx}
-                className="inline-flex items-center px-1.5 py-0.5 rounded-[6px] text-[12px] font-medium mx-0.5 bg-accent-bg text-herb cursor-pointer hover:bg-[#d5e5d5] transition-colors"
+                className="inline-flex items-center px-1.5 py-0.5 rounded-[6px] text-[12px] font-medium mx-0.5 bg-green-50 text-green-700 cursor-pointer hover:bg-green-100 transition-colors"
                 title={`${ing.amount} ${ing.unit} ${ing.name}`}
               >
                 {candidate}
@@ -225,8 +225,8 @@ export default function RecipeDetailModal({
       <div className="px-8 py-6">
         {/* Ingredients */}
         <div className="flex items-center gap-2 mb-4">
-          <ShoppingBasket className="w-4 h-4 text-herb" strokeWidth={2} />
-          <h3 className="font-semibold text-[13px] text-herb uppercase tracking-[0.04em]">
+          <ShoppingBasket className="w-4 h-4 text-green-700" strokeWidth={2} />
+          <h3 className="font-semibold text-[13px] text-green-700 uppercase tracking-[0.04em]">
             Ingredients
           </h3>
         </div>
@@ -256,8 +256,8 @@ export default function RecipeDetailModal({
         {recipe.steps.length > 0 && (
           <>
             <div className="flex items-center gap-2 mb-4 mt-6">
-              <ListOrdered className="w-4 h-4 text-herb" strokeWidth={2} />
-              <h3 className="font-semibold text-[13px] text-herb uppercase tracking-[0.04em]">
+              <ListOrdered className="w-4 h-4 text-green-700" strokeWidth={2} />
+              <h3 className="font-semibold text-[13px] text-green-700 uppercase tracking-[0.04em]">
                 Steps
               </h3>
             </div>
@@ -282,8 +282,8 @@ export default function RecipeDetailModal({
         {recipe.notes && (
           <>
             <div className="flex items-center gap-2 mb-3 mt-6">
-              <NotebookPen className="w-4 h-4 text-herb" strokeWidth={2} />
-              <h3 className="font-semibold text-[13px] text-herb uppercase tracking-[0.04em]">
+              <NotebookPen className="w-4 h-4 text-green-700" strokeWidth={2} />
+              <h3 className="font-semibold text-[13px] text-green-700 uppercase tracking-[0.04em]">
                 Notes
               </h3>
             </div>
