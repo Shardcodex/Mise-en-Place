@@ -67,7 +67,7 @@ export default function RecipeCard({ recipe, onClick }: RecipeCardProps) {
               return (
                 <span
                   key={meal}
-                  className="flex items-center gap-1 bg-accent-bg text-accent border border-accent/20 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                  className="flex items-center gap-1 bg-bg-warm text-ink-light border border-border rounded-full px-2 py-0.5 text-[10px] font-semibold"
                 >
                   <Icon className="w-2.5 h-2.5" strokeWidth={2.5} />
                   {MEAL_LABELS[meal]}

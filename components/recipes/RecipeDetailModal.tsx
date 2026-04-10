@@ -201,7 +201,7 @@ export default function RecipeDetailModal({
               return (
                 <span
                   key={meal}
-                  className="flex items-center gap-1 bg-accent-bg text-accent border border-accent/20 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                  className="flex items-center gap-1 bg-bg-warm text-ink-light border border-border rounded-full px-2.5 py-1 text-[11px] font-semibold"
                 >
                   <Icon className="w-3 h-3" strokeWidth={2.5} />
                   {MEAL_LABELS[meal]}
