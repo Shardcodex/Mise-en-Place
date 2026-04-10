@@ -51,11 +51,11 @@ export function usePlanner(weekStartDate: string) {
       if (profileData) setProfile(profileData);
     }
     setLoading(false);
-  }, [supabase]);
+  }, [supabase, weekStartDate]);
 
   useEffect(() => {
     fetchData();
-  }, [fetchData, weekStartDate]);
+  }, [fetchData]);
 
   async function addAssignment(
     recipe_id: string,
