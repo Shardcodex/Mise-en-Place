@@ -163,13 +163,10 @@ export const ALL_RECIPE_TAGS: string[] = TAG_GROUPS.flatMap((g) => g.tags);
 
 export type TagColorSet = { bg: string; text: string };
 
-// ── Rouxtine-aligned tag palette ───────────────────────────────────────────────
-// Palette stays functional (4 distinct groupings) while respecting the brand's
-// minimal, Ivoire-rooted neutrals and Rouge Vif accent.
-const HERB_TAG:   TagColorSet = { bg: "#EDECEA", text: "#444444" }; // warm stone  — dietary / diet plans
-const BERRY_TAG:  TagColorSet = { bg: "#FDF0EE", text: "#C41A0A" }; // rouge tint  — cuisine
-const HONEY_TAG:  TagColorSet = { bg: "#F5F0E8", text: "#6B5030" }; // parchment   — character / proteins
-const OCEAN_TAG:  TagColorSet = { bg: "#ECEEF2", text: "#2E3A4A" }; // cool slate  — cooking methods
+const HERB_TAG:   TagColorSet = { bg: "#EAF0EA", text: "#3D5E4B" }; // green  — dietary / diet plans
+const BERRY_TAG:  TagColorSet = { bg: "#F0E8EA", text: "#8A4A5A" }; // purple — cuisine
+const HONEY_TAG:  TagColorSet = { bg: "#F5EDE0", text: "#9A7A4A" }; // amber  — character / proteins
+const OCEAN_TAG:  TagColorSet = { bg: "#E8EFF5", text: "#3A5A7A" }; // blue   — cooking methods
 
 const TAG_COLOR_MAP: Record<string, TagColorSet> = {
   // Cuisine → berry
