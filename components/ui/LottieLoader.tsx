@@ -16,7 +16,6 @@ export default function LottieLoader({ visible }: LottieLoaderProps) {
       style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? "all" : "none" }}
       aria-hidden={!visible}
     >
-      {/* @ts-expect-error — lottie-player is a custom web component; types in types/lottie-player.d.ts */}
       <lottie-player
         src="/Loading.json"
         background="transparent"
