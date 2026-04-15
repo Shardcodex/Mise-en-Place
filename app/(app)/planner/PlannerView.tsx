@@ -207,38 +207,35 @@ export default function PlannerView() {
       <div className="-mx-4 -my-5 md:-mx-8 md:-my-10 flex flex-col">
 
         {/* ── Sticky page header ── */}
-        <div className="sticky top-0 z-20 bg-[#F7F5F2] px-8 py-5 border-b border-[#E5E3DF] flex items-center justify-between">
-          <div>
-            <h1 className="font-display font-bold text-[28px] text-[#0F0F0F] leading-tight">
+        <div className="sticky top-0 z-20 bg-[#F7F5F2] px-4 md:px-8 py-3 md:py-5 border-b border-[#E5E3DF] flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="font-display font-bold text-[22px] md:text-[28px] text-[#0F0F0F] leading-tight">
               {weekLabel}
             </h1>
-            <div className="flex items-center gap-2 mt-0.5">
-              <p className="font-sans font-light text-[13px] text-[#888888]">{weekRangeStr}</p>
-              {assignments.length === 0 && !loading && (
-                <span className="font-script text-[15px] text-[#888888]">Bon app&eacute;tit</span>
-              )}
-            </div>
+            <p className="font-sans font-light text-[11px] md:text-[13px] text-[#888888] truncate">
+              {weekRangeStr}
+            </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
             <button
               onClick={() => setWeekOffset((w) => w - 1)}
-              className="flex items-center gap-2 bg-white border border-[#E5E3DF] rounded-lg px-4 py-2 hover:bg-[#F7F5F2] transition-colors"
+              className="flex items-center justify-center gap-1.5 bg-white border border-[#E5E3DF] rounded-lg px-2.5 md:px-4 py-2 hover:bg-[#F7F5F2] transition-colors"
             >
               <ArrowLeft className="w-4 h-4 text-[#444444]" strokeWidth={2} />
-              <span className="font-sans font-medium text-[11px] tracking-[0.08em] text-[#444444] uppercase">Prev</span>
+              <span className="hidden md:inline font-sans font-medium text-[11px] tracking-[0.08em] text-[#444444] uppercase">Prev</span>
             </button>
             <button
               onClick={() => setWeekOffset(0)}
-              className="flex items-center gap-2 bg-[#0F0F0F] rounded-lg px-4 py-2 hover:bg-[#444444] transition-colors"
+              className="flex items-center gap-1.5 bg-[#0F0F0F] rounded-lg px-3 md:px-4 py-2 hover:bg-[#444444] transition-colors"
             >
               <span className="font-sans font-medium text-[11px] tracking-[0.08em] text-white uppercase">Today</span>
             </button>
             <button
               onClick={() => setWeekOffset((w) => w + 1)}
-              className="flex items-center gap-2 bg-white border border-[#E5E3DF] rounded-lg px-4 py-2 hover:bg-[#F7F5F2] transition-colors"
+              className="flex items-center justify-center gap-1.5 bg-white border border-[#E5E3DF] rounded-lg px-2.5 md:px-4 py-2 hover:bg-[#F7F5F2] transition-colors"
             >
-              <span className="font-sans font-medium text-[11px] tracking-[0.08em] text-[#444444] uppercase">Next</span>
+              <span className="hidden md:inline font-sans font-medium text-[11px] tracking-[0.08em] text-[#444444] uppercase">Next</span>
               <ArrowRight className="w-4 h-4 text-[#444444]" strokeWidth={2} />
             </button>
           </div>
@@ -266,8 +263,106 @@ export default function PlannerView() {
           </div>
         )}
 
-        {/* ── Planner grid ── */}
-        <div className="overflow-x-auto">
+        {/* ── Mobile layout (< md): vertical day cards ── */}
+        <div className="md:hidden">
+          {loading ? (
+            <div className="p-4 space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => <DayCardSkeleton key={i} />)}
+            </div>
+          ) : (
+            <div className="px-4 py-4 space-y-3">
+              {orderedDays.map((day) => {
+                const date = weekDates[day];
+                const today = isToday(date);
+                const dayAssignments = assignments.filter((a) => a.day === day);
+                const hasMeals = dayAssignments.length > 0;
+
+                return (
+                  <div
+                    key={day}
+                    className={`rounded-xl border-2 overflow-hidden ${
+                      today ? "border-[#E8200F]" : "border-[#E5E3DF]"
+                    }`}
+                  >
+                    {/* Day header */}
+                    <div
+                      className={`px-4 py-2.5 flex items-center justify-between ${
+                        today ? "bg-[#FFF5F5]" : "bg-[#F7F5F2]"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`font-sans font-semibold text-[14px] ${
+                            today ? "text-[#E8200F]" : "text-[#0F0F0F]"
+                          }`}
+                        >
+                          {day}
+                        </span>
+                        <span className="font-sans font-light text-[12px] text-[#888888]">
+                          {date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        </span>
+                      </div>
+                      {today && (
+                        <span className="font-sans text-[10px] font-semibold text-[#E8200F] bg-white border border-[#E8200F]/20 px-2 py-0.5 rounded-full">
+                          Today
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Meal slots */}
+                    <div className={`bg-white divide-y divide-[#F0EEEB] ${!hasMeals ? "px-4 py-3" : ""}`}>
+                      {!hasMeals ? (
+                        <button
+                          onClick={() => handleAdd(day, "dinner")}
+                          className="w-full flex items-center gap-2 text-[#888888] hover:text-[#444444] transition-colors"
+                        >
+                          <Plus className="w-3.5 h-3.5" strokeWidth={2.5} />
+                          <span className="font-sans font-light text-[12px]">Plan meals for this day</span>
+                        </button>
+                      ) : (
+                        PLANNER_MEALS.map((meal) => {
+                          const slotAssignments = dayAssignments.filter(
+                            (a) => a.meal_type === meal
+                          );
+                          return (
+                            <div key={meal} className="px-4 py-2.5">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="font-sans font-medium text-[10px] tracking-[0.1em] text-[#888888] uppercase w-[68px] flex-shrink-0">
+                                  {MEAL_LABELS[meal]}
+                                </span>
+                                {slotAssignments.length > 0 && (
+                                  <div className="flex-1 flex flex-col gap-1">
+                                    {slotAssignments.map((a) => (
+                                      <CellChip
+                                        key={a.id}
+                                        assignment={a}
+                                        onEdit={handleEdit}
+                                        onDelete={handleDelete}
+                                      />
+                                    ))}
+                                  </div>
+                                )}
+                                <button
+                                  onClick={() => handleAdd(day, meal)}
+                                  className="ml-auto w-6 h-6 rounded-full border border-[#E5E3DF] flex items-center justify-center hover:border-[#E8200F] hover:text-[#E8200F] text-[#CCCCCC] transition-colors flex-shrink-0"
+                                >
+                                  <Plus className="w-3 h-3" strokeWidth={2.5} />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* ── Desktop layout (≥ md): horizontal spreadsheet grid ── */}
+        <div className="hidden md:block overflow-x-auto">
           <div className="min-w-[860px]">
             {loading ? (
               <div className="grid grid-cols-2 gap-5 p-8">
@@ -279,9 +374,7 @@ export default function PlannerView() {
                 style={{ gridTemplateColumns: "140px repeat(7, 1fr)" }}
               >
                 {/* ── Column headers row ── */}
-                {/* Empty corner cell */}
                 <div className="bg-[#F7F5F2] border-b border-[#E5E3DF]" />
-                {/* Day headers */}
                 {orderedDays.map((day, i) => {
                   const date = weekDates[day];
                   const today = isToday(date);
@@ -305,14 +398,12 @@ export default function PlannerView() {
                 {/* ── Meal-type rows ── */}
                 {PLANNER_MEALS.map((meal) => (
                   <Fragment key={meal}>
-                    {/* Row label — sticky left */}
                     <div className="sticky left-0 z-10 bg-[#F7F5F2] px-4 py-4 border-b border-[#E5E3DF] flex items-start">
                       <span className="font-sans font-medium text-[10px] tracking-[0.12em] text-[#888888] uppercase">
                         {MEAL_LABELS[meal]}
                       </span>
                     </div>
 
-                    {/* Day cells */}
                     {orderedDays.map((day, i) => {
                       const slotAssignments = assignments.filter(
                         (a) => a.day === day && a.meal_type === meal
@@ -326,7 +417,6 @@ export default function PlannerView() {
                             i > 0 ? "border-l border-[#E5E3DF]" : ""
                           } ${todayCol ? "bg-[#FFF9F9]" : "bg-white"}`}
                         >
-                          {/* Recipe chips */}
                           {slotAssignments.map((a) => (
                             <CellChip
                               key={a.id}
@@ -335,8 +425,6 @@ export default function PlannerView() {
                               onDelete={handleDelete}
                             />
                           ))}
-
-                          {/* Add button */}
                           <button
                             onClick={() => handleAdd(day, meal)}
                             className={`mt-auto flex items-center justify-center gap-1.5 w-full rounded-lg border-2 border-dashed transition-all group py-2 ${
