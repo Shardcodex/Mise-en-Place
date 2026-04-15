@@ -90,7 +90,7 @@ function CellChip({
         {recipe.emoji}
       </span>
       <span
-        className={`font-display font-bold text-[11px] truncate flex-1 leading-tight ${
+        className={`font-sans font-semibold text-[11px] truncate flex-1 leading-tight ${
           isLeftover ? "text-[#888888]" : "text-[#0F0F0F]"
         }`}
         title={recipe.name}
@@ -292,7 +292,7 @@ export default function PlannerView() {
                         i > 0 ? "border-l border-[#E5E3DF]" : ""
                       }`}
                     >
-                      <div className={`font-display font-bold text-[13px] leading-tight ${today ? "text-[#E8200F]" : "text-[#0F0F0F]"}`}>
+                      <div className={`font-sans font-semibold text-[13px] leading-tight ${today ? "text-[#E8200F]" : "text-[#0F0F0F]"}`}>
                         {day}
                       </div>
                       <div className="font-sans font-light text-[11px] text-[#888888] mt-0.5">

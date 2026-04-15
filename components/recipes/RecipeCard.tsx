@@ -39,7 +39,7 @@ export default function RecipeCard({ recipe, onClick }: RecipeCardProps) {
         <div className="absolute bottom-0 left-0 right-0 p-4">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-[18px] leading-none">{recipe.emoji}</span>
-            <h3 className="font-display font-bold text-[16px] text-white leading-tight truncate flex-1">
+            <h3 className="font-sans font-semibold text-[15px] text-white leading-tight truncate flex-1">
               {recipe.name}
             </h3>
           </div>
