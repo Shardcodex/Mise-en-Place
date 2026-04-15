@@ -43,19 +43,71 @@ function parseDuration(iso: string): string {
 
 // ── JSON-LD helpers ───────────────────────────────────────────────────────────
 
-function extractInstructionText(node: unknown): string {
-  if (typeof node === "string") return node.trim();
-  if (typeof node !== "object" || node === null) return "";
-  const obj = node as Record<string, unknown>;
-  if (
-    (obj["@type"] === "HowToSection" || obj["@type"] === "HowToStep") &&
-    Array.isArray(obj.itemListElement)
-  ) {
-    return (obj.itemListElement as unknown[]).map(extractInstructionText).filter(Boolean).join("\n");
+/**
+ * Try to split a single block of instruction text into discrete steps.
+ * Handles numbered lists ("1. Preheat…"), line-breaks, and sentence-capital patterns.
+ */
+function splitStepText(text: string): string[] {
+  const t = text.trim();
+  if (!t) return [];
+
+  // 1. Numbered patterns: "1. " / "1) " / "Step 1: " / "Step 1. "
+  const byNumber = t.split(/\n?\s*(?:Step\s+\d+[.:\s]+|\d+[.)]\s+)/i).map((s) => s.trim()).filter((s) => s.length > 8);
+  if (byNumber.length > 1) return byNumber;
+
+  // 2. Double (or more) newlines
+  const byDoubleNewline = t.split(/\n{2,}/).map((s) => s.trim()).filter((s) => s.length > 8);
+  if (byDoubleNewline.length > 1) return byDoubleNewline;
+
+  // 3. Single newlines (each line is its own step)
+  const bySingleNewline = t.split(/\n/).map((s) => s.trim()).filter((s) => s.length > 8);
+  if (bySingleNewline.length > 1) return bySingleNewline;
+
+  // 4. Can't split — return as-is
+  return [t];
+}
+
+/**
+ * Recursively extract steps from a recipeInstructions node.
+ * Returns a flat string[] where each entry is one discrete step.
+ */
+function extractSteps(instructions: unknown): string[] {
+  // Plain string — try to split it into steps
+  if (typeof instructions === "string") {
+    return splitStepText(instructions.trim());
   }
-  if (typeof obj.text === "string") return obj.text.trim();
-  if (typeof obj.name === "string") return obj.name.trim();
-  return "";
+
+  if (!Array.isArray(instructions)) return [];
+
+  const steps: string[] = [];
+
+  for (const node of instructions) {
+    if (typeof node === "string") {
+      steps.push(...splitStepText(node.trim()));
+      continue;
+    }
+    if (typeof node !== "object" || node === null) continue;
+
+    const obj = node as Record<string, unknown>;
+
+    // HowToSection — recurse into its itemListElement children as individual steps
+    if (obj["@type"] === "HowToSection" && Array.isArray(obj.itemListElement)) {
+      steps.push(...extractSteps(obj.itemListElement));
+      continue;
+    }
+
+    // HowToStep or generic object — grab .text then .name
+    const raw =
+      typeof obj.text === "string"
+        ? obj.text.trim()
+        : typeof obj.name === "string"
+        ? obj.name.trim()
+        : "";
+
+    if (raw) steps.push(...splitStepText(raw));
+  }
+
+  return steps.filter(Boolean);
 }
 
 function extractImageUrl(image: unknown): string | null {
@@ -130,12 +182,8 @@ function parseJsonLd(html: string): ClippedRecipeData | null {
             .filter(Boolean)
         : [];
 
-      // steps
-      const steps: string[] = Array.isArray(obj.recipeInstructions)
-        ? (obj.recipeInstructions as unknown[])
-            .map(extractInstructionText)
-            .filter(Boolean)
-        : [];
+      // steps — handles arrays, single strings, HowToSection nesting, and plain text blocks
+      const steps: string[] = extractSteps(obj.recipeInstructions);
 
       // servings
       const servings = parseServings(obj.recipeYield);
