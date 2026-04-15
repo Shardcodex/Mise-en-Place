@@ -30,7 +30,7 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="hidden md:flex flex-col w-[260px] min-h-screen bg-[#0F0F0F] shrink-0 relative">
+    <aside className="hidden md:flex flex-col w-[260px] h-screen bg-[#0F0F0F] shrink-0 sticky top-0 overflow-y-auto">
       {/* Rouge accent stripe */}
       <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#E8200F]" />
 

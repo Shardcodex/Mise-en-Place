@@ -34,7 +34,7 @@ function AppShellInner({ children }: AppShellProps) {
     <>
       <LottieLoader visible={loading} />
 
-      <div className="min-h-screen bg-bg text-ink flex">
+      <div className="bg-bg text-ink flex min-h-screen">
         <Sidebar />
 
         <div className="flex-1 flex flex-col min-h-screen md:min-h-0 relative">
