@@ -110,7 +110,16 @@ export function usePlanner(weekStartDate: string) {
       leftover_of_id: sourceAssignment.id,
     });
     if (error) {
-      console.error("addLeftover error:", error);
+      console.error("addLeftover error:", JSON.stringify(error, null, 2));
+      console.error("addLeftover payload:", {
+        user_id: user.id,
+        recipe_id: sourceAssignment.recipe_id,
+        day,
+        meal_type,
+        scale: sourceAssignment.scale,
+        week_start_date: weekStartDate,
+        leftover_of_id: sourceAssignment.id,
+      });
       return false;
     }
     await fetchData();
