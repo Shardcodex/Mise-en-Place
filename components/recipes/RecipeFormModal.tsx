@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Plus, X, AlertTriangle, Camera, Trash2 } from "lucide-react";
+import { Plus, X, AlertTriangle, Camera, Trash2, Heading2 } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import RecipePhoto from "@/components/recipes/RecipePhoto";
 import {
@@ -28,7 +28,59 @@ const emptyIngredient = (): IngredientInput => ({
   amount: "",
   unit: "",
   category: "Produce" as IngredientCategory,
+  group_name: null,
 });
+
+const emptySectionRow = (label = "Section"): IngredientInput => ({
+  name: "",
+  amount: "",
+  unit: "",
+  category: "Other" as IngredientCategory,
+  group_name: label,
+});
+
+/** A section row is a special row with no ingredient name but a group_name label */
+function isSectionRow(ing: IngredientInput): boolean {
+  return ing.name === "" && ing.amount === "" && ing.unit === "" && !!ing.group_name;
+}
+
+/**
+ * Before saving: collapse section header rows by propagating their group_name
+ * onto the real ingredient rows that follow them.
+ */
+function flattenSections(rows: IngredientInput[]): IngredientInput[] {
+  const result: IngredientInput[] = [];
+  let currentGroup: string | null = null;
+  for (const row of rows) {
+    if (isSectionRow(row)) {
+      currentGroup = row.group_name?.trim() || null;
+      continue;
+    }
+    if (!row.name.trim()) continue;
+    result.push({ ...row, group_name: currentGroup });
+  }
+  return result;
+}
+
+/**
+ * When loading from a saved recipe: expand group_name changes into section header rows.
+ */
+function expandGroupNames(ingredients: { name: string; amount: string; unit: string; category: IngredientCategory; group_name?: string | null }[]): IngredientInput[] {
+  const rows: IngredientInput[] = [];
+  let currentGroup: string | null | undefined = undefined; // undefined = not yet seen
+
+  for (const ing of ingredients) {
+    const g = ing.group_name ?? null;
+    if (g !== currentGroup) {
+      currentGroup = g;
+      if (g) {
+        rows.push(emptySectionRow(g));
+      }
+    }
+    rows.push({ name: ing.name, amount: ing.amount, unit: ing.unit, category: ing.category, group_name: g });
+  }
+  return rows;
+}
 
 export default function RecipeFormModal({
   open,
@@ -83,14 +135,7 @@ export default function RecipeFormModal({
       setNotes(recipe.notes || "");
       setExistingPhotoPath(recipe.photo_path || null);
       setPhotoFocus(recipe.photo_focus || "center");
-      setIngredients(
-        recipe.ingredients.map((i) => ({
-          name: i.name,
-          amount: i.amount,
-          unit: i.unit,
-          category: i.category,
-        }))
-      );
+      setIngredients(expandGroupNames(recipe.ingredients));
       setSteps(recipe.steps.map((s) => s.text));
     } else {
       setEmoji(EMOJIS[Math.floor(Math.random() * EMOJIS.length)]);
@@ -206,7 +251,7 @@ export default function RecipeFormModal({
   // like "@olive oil" are recognised as valid and don't show up as broken.
   function findBrokenRefs(): string[] {
     const sortedNames = ingredients
-      .filter((i) => i.name.trim())
+      .filter((i) => i.name.trim() && !isSectionRow(i))
       .map((i) => i.name.toLowerCase())
       .sort((a, b) => b.length - a.length); // longest first
 
@@ -276,7 +321,7 @@ export default function RecipeFormModal({
       tags: [...cuisines, ...methods, ...recipeTags],
       source_url: sourceUrl.trim(),
       notes: notes.trim(),
-      ingredients: ingredients.filter((i) => i.name.trim()),
+      ingredients: flattenSections(ingredients),
       steps: steps.filter((s) => s.trim()),
     };
 
@@ -366,6 +411,7 @@ export default function RecipeFormModal({
               }}
             >
               {newPhotoPreview ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={newPhotoPreview}
                   alt=""
@@ -598,13 +644,24 @@ export default function RecipeFormModal({
         <div>
           <div className="flex items-center justify-between mb-2">
             <label className="font-medium text-[12px] text-ink-light">Ingredients</label>
-            <button
-              onClick={addIngredient}
-              className="flex items-center gap-1 text-accent text-[11px] font-semibold hover:text-green-700 transition-colors"
-            >
-              <Plus className="w-3 h-3" strokeWidth={2.5} />
-              Add ingredient
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setIngredients((prev) => [...prev, emptySectionRow()])}
+                className="flex items-center gap-1 text-[#888888] text-[11px] font-semibold hover:text-[#444444] transition-colors"
+              >
+                <Heading2 className="w-3 h-3" strokeWidth={2.5} />
+                Add section
+              </button>
+              <button
+                type="button"
+                onClick={addIngredient}
+                className="flex items-center gap-1 text-accent text-[11px] font-semibold hover:text-green-700 transition-colors"
+              >
+                <Plus className="w-3 h-3" strokeWidth={2.5} />
+                Add ingredient
+              </button>
+            </div>
           </div>
           <div className="bg-[#F8F8F5] rounded-input p-4 space-y-2.5">
             {ingredients.length === 0 ? (
@@ -613,48 +670,66 @@ export default function RecipeFormModal({
                 <p className="text-[12px]">Add your first ingredient</p>
               </div>
             ) : (
-              ingredients.map((ing, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <input
-                    value={ing.amount}
-                    onChange={(e) => updateIngredient(i, "amount", e.target.value)}
-                    placeholder="Amt"
-                    className="w-14 bg-bg-warm border border-border rounded-[10px] px-2 py-1.5 text-[12px] text-ink focus:outline-none focus:border-accent"
-                  />
-                  <input
-                    value={ing.unit}
-                    onChange={(e) => updateIngredient(i, "unit", e.target.value)}
-                    placeholder="Unit"
-                    className="w-16 bg-bg-warm border border-border rounded-[10px] px-2 py-1.5 text-[12px] text-ink focus:outline-none focus:border-accent"
-                  />
-                  <input
-                    value={ing.name}
-                    onChange={(e) => updateIngredient(i, "name", e.target.value)}
-                    onBlur={(e) => handleIngredientNameBlur(i, e.target.value)}
-                    placeholder="Ingredient name"
-                    className="flex-1 bg-bg-warm border border-border rounded-[10px] px-2 py-1.5 text-[12px] text-ink focus:outline-none focus:border-accent"
-                  />
-                  <select
-                    value={ing.category}
-                    onChange={(e) =>
-                      updateIngredient(i, "category", e.target.value)
-                    }
-                    className="w-24 bg-bg-warm border border-border rounded-[10px] px-2 py-1.5 text-[12px] text-ink focus:outline-none focus:border-accent"
-                  >
-                    {CATEGORIES.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={() => removeIngredient(i)}
-                    className="text-ink-muted hover:text-danger transition-colors"
-                  >
-                    <X className="w-3.5 h-3.5" strokeWidth={2} />
-                  </button>
-                </div>
-              ))
+              ingredients.map((ing, i) =>
+                isSectionRow(ing) ? (
+                  /* Section header row */
+                  <div key={i} className="flex items-center gap-2 pt-1">
+                    <Heading2 className="w-3.5 h-3.5 text-[#888888] shrink-0" strokeWidth={2} />
+                    <input
+                      value={ing.group_name ?? ""}
+                      onChange={(e) => updateIngredient(i, "group_name", e.target.value)}
+                      placeholder="Section name (e.g. Dry Ingredients)"
+                      className="flex-1 bg-white border border-dashed border-[#CCCCCC] rounded-[10px] px-3 py-1.5 text-[12px] font-semibold text-[#444444] placeholder:text-[#BBBBBB] focus:outline-none focus:border-[#888888]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeIngredient(i)}
+                      className="text-ink-muted hover:text-danger transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5" strokeWidth={2} />
+                    </button>
+                  </div>
+                ) : (
+                  /* Regular ingredient row */
+                  <div key={i} className="flex items-center gap-2">
+                    <input
+                      value={ing.amount}
+                      onChange={(e) => updateIngredient(i, "amount", e.target.value)}
+                      placeholder="Amt"
+                      className="w-14 bg-bg-warm border border-border rounded-[10px] px-2 py-1.5 text-[12px] text-ink focus:outline-none focus:border-accent"
+                    />
+                    <input
+                      value={ing.unit}
+                      onChange={(e) => updateIngredient(i, "unit", e.target.value)}
+                      placeholder="Unit"
+                      className="w-16 bg-bg-warm border border-border rounded-[10px] px-2 py-1.5 text-[12px] text-ink focus:outline-none focus:border-accent"
+                    />
+                    <input
+                      value={ing.name}
+                      onChange={(e) => updateIngredient(i, "name", e.target.value)}
+                      onBlur={(e) => handleIngredientNameBlur(i, e.target.value)}
+                      placeholder="Ingredient name"
+                      className="flex-1 bg-bg-warm border border-border rounded-[10px] px-2 py-1.5 text-[12px] text-ink focus:outline-none focus:border-accent"
+                    />
+                    <select
+                      value={ing.category}
+                      onChange={(e) => updateIngredient(i, "category", e.target.value)}
+                      className="w-24 bg-bg-warm border border-border rounded-[10px] px-2 py-1.5 text-[12px] text-ink focus:outline-none focus:border-accent"
+                    >
+                      {CATEGORIES.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => removeIngredient(i)}
+                      className="text-ink-muted hover:text-danger transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5" strokeWidth={2} />
+                    </button>
+                  </div>
+                )
+              )
             )}
           </div>
         </div>

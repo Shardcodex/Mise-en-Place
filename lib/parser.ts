@@ -10,6 +10,50 @@ export interface ParsedRecipe {
   steps: string[];
 }
 
+/**
+ * Detect whether a raw ingredient string is actually a section header
+ * (e.g. "For the frosting:", "Dry Ingredients:", "WET INGREDIENTS").
+ */
+function isSectionHeader(line: string): boolean {
+  const l = line.trim();
+  if (l.length === 0 || l.length > 60) return false;
+  // Ends with colon and no leading quantity
+  if (l.endsWith(":") && !/^[\d¼½¾⅓⅔⅛⅜⅝⅞]/.test(l)) return true;
+  // All-caps phrase with no digits
+  if (l === l.toUpperCase() && /[A-Z]/.test(l) && !/\d/.test(l)) return true;
+  // Common prefixes
+  if (/^(for the |for |the )/i.test(l) && l.split(" ").length <= 6) return true;
+  return false;
+}
+
+/**
+ * Parse an array of raw ingredient strings (from JSON-LD recipeIngredient)
+ * into IngredientInput objects, promoting section-header strings into group_name
+ * on the subsequent ingredients.
+ */
+export function parseIngredientStrings(strings: string[]): IngredientInput[] {
+  const result: IngredientInput[] = [];
+  let currentGroup: string | null = null;
+
+  for (const raw of strings) {
+    const trimmed = raw.trim();
+    if (!trimmed) continue;
+
+    if (isSectionHeader(trimmed)) {
+      // Strip trailing colon for the label
+      currentGroup = trimmed.replace(/:$/, "").trim();
+      continue;
+    }
+
+    const parsed = parseIngredientLine(trimmed);
+    if (parsed) {
+      result.push({ ...parsed, group_name: currentGroup });
+    }
+  }
+
+  return result;
+}
+
 export function smartParseRecipe(raw: string, nameOverride?: string): ParsedRecipe {
   const lines = raw.split(/\n/).map((l) => l.trim()).filter(Boolean);
 
@@ -122,7 +166,7 @@ function looksLikeStep(line: string): boolean {
   return false;
 }
 
-function parseIngredientLine(line: string): IngredientInput | null {
+export function parseIngredientLine(line: string): IngredientInput | null {
   let l = line.replace(/^[-•*▪▸◦]\s*/, "").replace(/^\d+[\.\)]\s*/, "").trim();
   if (!l) return null;
 

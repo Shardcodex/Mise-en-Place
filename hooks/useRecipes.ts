@@ -93,6 +93,7 @@ export function useRecipes(cookbookId?: string | null) {
           unit: ing.unit,
           category: ing.category,
           sort_order: i,
+          group_name: ing.group_name ?? null,
         }))
       );
       if (ingErr) console.error("Ingredient insert error:", ingErr);
@@ -151,6 +152,7 @@ export function useRecipes(cookbookId?: string | null) {
           unit: ing.unit,
           category: ing.category,
           sort_order: i,
+          group_name: ing.group_name ?? null,
         }))
       );
     }

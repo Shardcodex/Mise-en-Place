@@ -6,9 +6,204 @@ export const runtime = "nodejs";
  * GET /api/clip?url=https://...
  *
  * Server-side URL fetcher for the recipe clipper.
- * Fetches the target page, strips HTML noise, and returns plain text
- * so the client-side parser can extract recipe data.
+ * 1. Fetches the target page
+ * 2. Attempts to parse Schema.org JSON-LD (most reliable)
+ * 3. Falls back to og:image for photo + stripped text for legacy parsing
  */
+
+export interface ClippedRecipeData {
+  name: string;
+  ingredients: string[];   // raw strings, parsed client-side
+  steps: string[];
+  servings: number | null;
+  time: string | null;
+  imageUrl: string | null;
+  tags: string[];
+  /** Only present when JSON-LD is unavailable; client falls back to smartParseRecipe */
+  rawText?: string;
+}
+
+// ── ISO 8601 duration helpers ─────────────────────────────────────────────────
+
+function parseDurationMins(iso: string): number {
+  const m = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
+  if (!m) return 0;
+  return parseInt(m[1] || "0") * 60 + parseInt(m[2] || "0");
+}
+
+function parseDuration(iso: string): string {
+  const total = parseDurationMins(iso);
+  if (total === 0) return iso;
+  const h = Math.floor(total / 60);
+  const min = total % 60;
+  if (h > 0 && min > 0) return `${h}h ${min} min`;
+  if (h > 0) return `${h}h`;
+  return `${min} min`;
+}
+
+// ── JSON-LD helpers ───────────────────────────────────────────────────────────
+
+function extractInstructionText(node: unknown): string {
+  if (typeof node === "string") return node.trim();
+  if (typeof node !== "object" || node === null) return "";
+  const obj = node as Record<string, unknown>;
+  if (
+    (obj["@type"] === "HowToSection" || obj["@type"] === "HowToStep") &&
+    Array.isArray(obj.itemListElement)
+  ) {
+    return (obj.itemListElement as unknown[]).map(extractInstructionText).filter(Boolean).join("\n");
+  }
+  if (typeof obj.text === "string") return obj.text.trim();
+  if (typeof obj.name === "string") return obj.name.trim();
+  return "";
+}
+
+function extractImageUrl(image: unknown): string | null {
+  if (typeof image === "string" && image.startsWith("http")) return image;
+  if (Array.isArray(image)) {
+    for (const item of image) {
+      const url = extractImageUrl(item);
+      if (url) return url;
+    }
+  }
+  if (typeof image === "object" && image !== null) {
+    const obj = image as Record<string, unknown>;
+    if (typeof obj.url === "string" && obj.url.startsWith("http")) return obj.url;
+    if (typeof obj.contentUrl === "string") return obj.contentUrl;
+  }
+  return null;
+}
+
+function parseServings(yieldVal: unknown): number | null {
+  if (typeof yieldVal === "number") return yieldVal;
+  const str = Array.isArray(yieldVal) ? String(yieldVal[0]) : String(yieldVal ?? "");
+  const m = str.match(/\d+/);
+  return m ? parseInt(m[0]) : null;
+}
+
+function parseJsonLd(html: string): ClippedRecipeData | null {
+  const re = /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+  let match: RegExpExecArray | null;
+
+  while ((match = re.exec(html)) !== null) {
+    let data: unknown;
+    try {
+      data = JSON.parse(match[1]);
+    } catch {
+      continue;
+    }
+
+    // Flatten @graph and top-level arrays
+    const candidates: unknown[] = [];
+    if (Array.isArray(data)) {
+      candidates.push(...data);
+    } else {
+      candidates.push(data);
+      if (
+        typeof data === "object" &&
+        data !== null &&
+        "@graph" in data &&
+        Array.isArray((data as Record<string, unknown>)["@graph"])
+      ) {
+        candidates.push(...((data as Record<string, unknown>)["@graph"] as unknown[]));
+      }
+    }
+
+    for (const item of candidates) {
+      if (typeof item !== "object" || item === null) continue;
+      const obj = item as Record<string, unknown>;
+
+      const type = obj["@type"];
+      const isRecipe =
+        type === "Recipe" ||
+        (Array.isArray(type) && (type as string[]).includes("Recipe"));
+      if (!isRecipe) continue;
+
+      // name
+      const name = typeof obj.name === "string" ? obj.name.trim() : "";
+
+      // ingredients
+      const ingredients: string[] = Array.isArray(obj.recipeIngredient)
+        ? (obj.recipeIngredient as unknown[])
+            .filter((i): i is string => typeof i === "string")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [];
+
+      // steps
+      const steps: string[] = Array.isArray(obj.recipeInstructions)
+        ? (obj.recipeInstructions as unknown[])
+            .map(extractInstructionText)
+            .filter(Boolean)
+        : [];
+
+      // servings
+      const servings = parseServings(obj.recipeYield);
+
+      // time — prefer totalTime, else prepTime + cookTime
+      let time: string | null = null;
+      if (typeof obj.totalTime === "string") {
+        time = parseDuration(obj.totalTime);
+      } else {
+        const prepMins = typeof obj.prepTime === "string" ? parseDurationMins(obj.prepTime) : 0;
+        const cookMins = typeof obj.cookTime === "string" ? parseDurationMins(obj.cookTime) : 0;
+        const total = prepMins + cookMins;
+        if (total > 0) {
+          const h = Math.floor(total / 60);
+          const min = total % 60;
+          time = h > 0 && min > 0 ? `${h}h ${min} min` : h > 0 ? `${h}h` : `${min} min`;
+        }
+      }
+
+      // image
+      const imageUrl = extractImageUrl(obj.image);
+
+      // tags / keywords
+      const tags: string[] = [];
+      if (typeof obj.keywords === "string") {
+        tags.push(...obj.keywords.split(",").map((k) => k.trim()).filter(Boolean));
+      } else if (Array.isArray(obj.keywords)) {
+        tags.push(...(obj.keywords as unknown[]).filter((k): k is string => typeof k === "string"));
+      }
+
+      if (name || ingredients.length > 0 || steps.length > 0) {
+        return { name, ingredients, steps, servings, time, imageUrl, tags };
+      }
+    }
+  }
+
+  return null;
+}
+
+function extractOgImage(html: string): string | null {
+  const m =
+    html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ||
+    html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+  return m ? m[1] : null;
+}
+
+function stripHtml(html: string): string {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<nav[\s\S]*?<\/nav>/gi, " ")
+    .replace(/<footer[\s\S]*?<\/footer>/gi, " ")
+    .replace(/<aside[\s\S]*?<\/aside>/gi, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/<[^>]+>/g, " ")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+    .slice(0, 40_000);
+}
+
+// ── Route handler ─────────────────────────────────────────────────────────────
+
 export async function GET(req: NextRequest) {
   const url = req.nextUrl.searchParams.get("url");
 
@@ -16,7 +211,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Missing url parameter" }, { status: 400 });
   }
 
-  // Basic URL validation
   let parsed: URL;
   try {
     parsed = new URL(url);
@@ -31,7 +225,6 @@ export async function GET(req: NextRequest) {
   try {
     const response = await fetch(url, {
       headers: {
-        // Mimic a real browser so recipe sites don't block the request
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
         Accept:
@@ -40,54 +233,44 @@ export async function GET(req: NextRequest) {
         "Accept-Encoding": "gzip, deflate, br",
         "Cache-Control": "no-cache",
       },
-      // 10-second timeout
       signal: AbortSignal.timeout(10_000),
     });
 
     if (!response.ok) {
-      return NextResponse.json(
-        { error: `Site returned ${response.status}` },
-        { status: 502 }
-      );
+      return NextResponse.json({ error: `Site returned ${response.status}` }, { status: 502 });
     }
 
     const contentType = response.headers.get("content-type") ?? "";
     if (!contentType.includes("text/html") && !contentType.includes("text/plain")) {
-      return NextResponse.json(
-        { error: "URL does not point to an HTML page" },
-        { status: 422 }
-      );
+      return NextResponse.json({ error: "URL does not point to an HTML page" }, { status: 422 });
     }
 
     const html = await response.text();
 
-    // ── Strip noise from the HTML ─────────────────────────────────────────────
+    // 1. Try JSON-LD structured data — most accurate
+    const structured = parseJsonLd(html);
+    if (structured) {
+      // Fill in og:image if JSON-LD didn't have one
+      if (!structured.imageUrl) {
+        structured.imageUrl = extractOgImage(html);
+      }
+      return NextResponse.json({ recipe: structured });
+    }
 
-    // Remove <script>, <style>, <nav>, <footer>, <header>, <aside> blocks
-    const stripped = html
-      .replace(/<script[\s\S]*?<\/script>/gi, " ")
-      .replace(/<style[\s\S]*?<\/style>/gi, " ")
-      .replace(/<nav[\s\S]*?<\/nav>/gi, " ")
-      .replace(/<footer[\s\S]*?<\/footer>/gi, " ")
-      .replace(/<aside[\s\S]*?<\/aside>/gi, " ")
-      // Decode common HTML entities
-      .replace(/&amp;/g, "&")
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">")
-      .replace(/&nbsp;/g, " ")
-      .replace(/&#39;/g, "'")
-      .replace(/&quot;/g, '"')
-      // Strip remaining tags
-      .replace(/<[^>]+>/g, " ")
-      // Collapse whitespace
-      .replace(/[ \t]+/g, " ")
-      .replace(/\n{3,}/g, "\n\n")
-      .trim();
-
-    // Cap at 40 000 chars so the parser doesn't choke
-    const text = stripped.slice(0, 40_000);
-
-    return NextResponse.json({ text });
+    // 2. Fallback: return stripped text for client-side heuristic parsing
+    const rawText = stripHtml(html);
+    const ogImage = extractOgImage(html);
+    const fallback: ClippedRecipeData = {
+      name: "",
+      ingredients: [],
+      steps: [],
+      servings: null,
+      time: null,
+      imageUrl: ogImage,
+      tags: [],
+      rawText,
+    };
+    return NextResponse.json({ recipe: fallback });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Unknown error";
     const isTimeout = msg.includes("timeout") || msg.includes("abort");

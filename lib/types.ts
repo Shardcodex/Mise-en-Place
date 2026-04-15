@@ -69,6 +69,7 @@ export interface Ingredient {
   unit: string;
   category: IngredientCategory;
   sort_order: number;
+  group_name?: string | null;
 }
 
 export interface Step {
@@ -132,6 +133,7 @@ export interface IngredientInput {
   amount: string;
   unit: string;
   category: IngredientCategory;
+  group_name?: string | null;
 }
 
 export interface RecipeInput {

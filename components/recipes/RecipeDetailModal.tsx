@@ -26,7 +26,7 @@ export default function RecipeDetailModal({
   onEdit,
   onDelete,
 }: RecipeDetailModalProps) {
-  // Group ingredients by category
+  // Group ingredients by category (used when no group_names are present)
   const grouped = useMemo(() => {
     if (!recipe) return [];
     const map = new Map<string, Ingredient[]>();
@@ -40,6 +40,12 @@ export default function RecipeDetailModal({
       items,
     }));
   }, [recipe]);
+
+  /** True when at least one ingredient carries a group_name — enables section-header rendering */
+  const hasSections = useMemo(
+    () => !!recipe && recipe.ingredients.some((i) => !!i.group_name),
+    [recipe]
+  );
 
   // Build a set of ingredient names for @reference validation
   const ingredientNames = useMemo(() => {
@@ -231,27 +237,68 @@ export default function RecipeDetailModal({
             Ingredients
           </h3>
         </div>
-        {grouped.map(({ category, items }) => {
-          const Icon = CATEGORY_ICONS[category];
-          return (
-            <div key={category} className="mb-5">
-              <div className="flex items-center gap-2 mb-2">
-                <Icon className="w-3.5 h-3.5 text-accent" strokeWidth={2} />
-                <span className="font-medium text-[12px] text-accent">{category}</span>
-              </div>
-              <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 bg-[#F8F8F5] rounded-input p-4">
-                {items.map((item, i) => (
-                  <div key={i} className="flex items-baseline gap-2">
-                    <span className="text-[13px] text-ink-light shrink-0">
-                      {item.amount} {item.unit}
-                    </span>
-                    <span className="text-[13px] text-ink">{item.name}</span>
+
+        {hasSections ? (
+          /* ── Section-grouped view ── */
+          (() => {
+            const sections: { label: string | null; items: Ingredient[] }[] = [];
+            let current: { label: string | null; items: Ingredient[] } | null = null;
+            for (const ing of recipe!.ingredients) {
+              const g = ing.group_name ?? null;
+              if (!current || g !== current.label) {
+                current = { label: g, items: [] };
+                sections.push(current);
+              }
+              current.items.push(ing);
+            }
+            return (
+              <div className="space-y-5">
+                {sections.map((section, si) => (
+                  <div key={si}>
+                    {section.label && (
+                      <p className="font-semibold text-[12px] text-[#444444] uppercase tracking-[0.06em] mb-2">
+                        {section.label}
+                      </p>
+                    )}
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 bg-[#F8F8F5] rounded-input p-4">
+                      {section.items.map((item, i) => (
+                        <div key={i} className="flex items-baseline gap-2">
+                          <span className="text-[13px] text-ink-light shrink-0">
+                            {item.amount} {item.unit}
+                          </span>
+                          <span className="text-[13px] text-ink">{item.name}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
-            </div>
-          );
-        })}
+            );
+          })()
+        ) : (
+          /* ── Category-grouped view (existing) ── */
+          grouped.map(({ category, items }) => {
+            const Icon = CATEGORY_ICONS[category];
+            return (
+              <div key={category} className="mb-5">
+                <div className="flex items-center gap-2 mb-2">
+                  <Icon className="w-3.5 h-3.5 text-accent" strokeWidth={2} />
+                  <span className="font-medium text-[12px] text-accent">{category}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 bg-[#F8F8F5] rounded-input p-4">
+                  {items.map((item, i) => (
+                    <div key={i} className="flex items-baseline gap-2">
+                      <span className="text-[13px] text-ink-light shrink-0">
+                        {item.amount} {item.unit}
+                      </span>
+                      <span className="text-[13px] text-ink">{item.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })
+        )}
 
         {/* Steps */}
         {recipe.steps.length > 0 && (
