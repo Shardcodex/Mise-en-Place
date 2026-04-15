@@ -7,7 +7,11 @@ import { createClient } from "@/lib/supabase/client";
 import CookbookSettingsModal from "./CookbookSettingsModal";
 import type { Cookbook } from "@/lib/types";
 
-export default function CookbookSwitcher() {
+interface CookbookSwitcherProps {
+  dark?: boolean;
+}
+
+export default function CookbookSwitcher({ dark = false }: CookbookSwitcherProps) {
   const { cookbooks, activeCookbook, setActiveCookbook, createCookbook } =
     useCookbookContext();
 
@@ -47,24 +51,33 @@ export default function CookbookSwitcher() {
 
   const isOwner = activeCookbook.owner_id === userId;
 
+  const d = dark;
+  const triggerHover = d ? "hover:bg-[#1A1A1A]" : "hover:bg-[#F5F5F2]";
+  const itemHover = d ? "hover:bg-[#2A2A2A]" : "hover:bg-[#F5F5F2]";
+  const dropdownBg = d ? "bg-[#1A1A1A] border-[#2A2A2A]" : "bg-bg-card border-border";
+  const textPrimary = d ? "text-white" : "text-ink";
+  const textMuted = d ? "text-[#888888]" : "text-ink-muted";
+  const inputBg = d ? "bg-[#2A2A2A] border-[#3A3A3A] text-white" : "bg-bg-warm border-border text-ink";
+  const divider = d ? "border-[#2A2A2A]" : "border-border";
+
   return (
     <div className="relative">
       {/* Trigger */}
       <button
         onClick={handleOpenDropdown}
-        className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-[10px] hover:bg-[#F5F5F2] transition-colors group"
+        className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-[10px] ${triggerHover} transition-colors group`}
       >
         <div className="w-7 h-7 rounded-[8px] bg-accent-bg flex items-center justify-center shrink-0">
           <BookOpen className="w-3.5 h-3.5 text-accent" strokeWidth={2} />
         </div>
         <div className="flex-1 min-w-0 text-left">
-          <p className="text-[12px] font-semibold text-ink truncate">{activeCookbook.name}</p>
-          <p className="text-[9px] text-ink-muted">
+          <p className={`text-[12px] font-semibold ${textPrimary} truncate`}>{activeCookbook.name}</p>
+          <p className={`text-[9px] ${textMuted}`}>
             {cookbooks.length === 1 ? "1 cookbook" : `${cookbooks.length} cookbooks`}
           </p>
         </div>
         <ChevronDown
-          className={`w-3.5 h-3.5 text-ink-muted transition-transform ${open ? "rotate-180" : ""}`}
+          className={`w-3.5 h-3.5 ${textMuted} transition-transform ${open ? "rotate-180" : ""}`}
           strokeWidth={2}
         />
       </button>
@@ -75,19 +88,19 @@ export default function CookbookSwitcher() {
           {/* Backdrop */}
           <div className="fixed inset-0 z-20" onClick={() => setOpen(false)} />
 
-          <div className="absolute bottom-full left-0 right-0 mb-1 bg-bg-card border border-border rounded-[14px] shadow-card z-30 overflow-hidden">
+          <div className={`absolute bottom-full left-0 right-0 mb-1 ${dropdownBg} border rounded-[14px] shadow-card z-30 overflow-hidden`}>
             {/* Cookbook list */}
             <div className="p-1.5 space-y-0.5 max-h-[220px] overflow-y-auto">
               {cookbooks.map((cb) => (
                 <button
                   key={cb.id}
                   onClick={() => { setActiveCookbook(cb); setOpen(false); }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-[8px] hover:bg-[#F5F5F2] transition-colors text-left"
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-[8px] ${itemHover} transition-colors text-left`}
                 >
                   <div className="w-6 h-6 rounded-[6px] bg-accent-bg flex items-center justify-center shrink-0">
                     <BookOpen className="w-3 h-3 text-accent" strokeWidth={2} />
                   </div>
-                  <span className="flex-1 text-[12px] text-ink font-medium truncate">{cb.name}</span>
+                  <span className={`flex-1 text-[12px] ${textPrimary} font-medium truncate`}>{cb.name}</span>
                   {cb.id === activeCookbook.id && (
                     <Check className="w-3 h-3 text-accent shrink-0" strokeWidth={2.5} />
                   )}
@@ -95,14 +108,14 @@ export default function CookbookSwitcher() {
               ))}
             </div>
 
-            <div className="border-t border-border p-1.5 space-y-0.5">
+            <div className={`border-t ${divider} p-1.5 space-y-0.5`}>
               {/* Settings for active cookbook */}
               <button
                 onClick={() => { setOpen(false); setSettingsOpen(true); }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-[8px] hover:bg-[#F5F5F2] transition-colors text-left"
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-[8px] ${itemHover} transition-colors text-left`}
               >
-                <Settings className="w-3.5 h-3.5 text-ink-muted" strokeWidth={2} />
-                <span className="text-[12px] text-ink-muted">Settings &amp; members</span>
+                <Settings className={`w-3.5 h-3.5 ${textMuted}`} strokeWidth={2} />
+                <span className={`text-[12px] ${textMuted}`}>Settings &amp; members</span>
               </button>
 
               {/* Create new cookbook */}
@@ -117,7 +130,7 @@ export default function CookbookSwitcher() {
                       if (e.key === "Escape") { setCreating(false); setNewName(""); }
                     }}
                     placeholder="Cookbook name…"
-                    className="flex-1 bg-bg-warm border border-border rounded-[8px] px-2 py-1 text-[11px] text-ink focus:outline-none focus:border-accent"
+                    className={`flex-1 ${inputBg} border rounded-[8px] px-2 py-1 text-[11px] focus:outline-none focus:border-accent`}
                   />
                   <button
                     onClick={handleCreateCookbook}
@@ -130,10 +143,10 @@ export default function CookbookSwitcher() {
               ) : (
                 <button
                   onClick={() => setCreating(true)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-[8px] hover:bg-[#F5F5F2] transition-colors text-left"
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-[8px] ${itemHover} transition-colors text-left`}
                 >
-                  <Plus className="w-3.5 h-3.5 text-ink-muted" strokeWidth={2} />
-                  <span className="text-[12px] text-ink-muted">New cookbook</span>
+                  <Plus className={`w-3.5 h-3.5 ${textMuted}`} strokeWidth={2} />
+                  <span className={`text-[12px] ${textMuted}`}>New cookbook</span>
                 </button>
               )}
             </div>

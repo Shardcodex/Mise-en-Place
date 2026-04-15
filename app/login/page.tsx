@@ -3,12 +3,15 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 
 export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -25,7 +28,10 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: `${window.location.origin}/recipes` },
+        options: {
+          emailRedirectTo: `${window.location.origin}/recipes`,
+          data: { full_name: fullName },
+        },
       });
       if (error) {
         setError(error.message);
@@ -34,10 +40,7 @@ export default function LoginPage() {
         setIsSignUp(false);
       }
     } else {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         setError(error.message);
       } else {
@@ -49,83 +52,134 @@ export default function LoginPage() {
     setLoading(false);
   }
 
+  function switchMode(toSignUp: boolean) {
+    setIsSignUp(toSignUp);
+    setError("");
+    setMessage("");
+  }
+
   return (
-    <div className="min-h-screen bg-bg flex items-center justify-center px-4">
-      <div className="w-full max-w-[400px]">
-        {/* Logo */}
-        <div className="text-center mb-10">
-          {/* Ladle mark */}
-          <div className="w-16 h-16 rounded-full bg-ink flex items-center justify-center mx-auto mb-5">
-            <svg width="32" height="32" viewBox="0 0 44 44" fill="none" aria-hidden="true">
-              <circle cx="16" cy="14" r="9" stroke="#FFFFFF" strokeWidth="2" fill="none"/>
-              <line x1="22" y1="20" x2="38" y2="38" stroke="#E8200F" strokeWidth="2.5" strokeLinecap="round"/>
-              <circle cx="16" cy="14" r="4" fill="#E8200F" opacity="0.35"/>
-            </svg>
-          </div>
-          {/* Wordmark */}
-          <h1 className="font-display font-bold text-[28px] tracking-[-0.02em] text-ink leading-none">
-            Roux<em className="italic text-accent">tine</em>
-          </h1>
-          <p className="text-[13px] text-ink-muted mt-2">
-            The foundation of every great meal.
+    <div className="min-h-screen flex">
+      {/* Left image panel */}
+      <div className="hidden md:block w-[45%] relative overflow-hidden bg-[#0F0F0F]">
+        <Image
+          src="/images/login-side.jpg"
+          alt="A cozy kitchen scene with warm wooden shelves"
+          fill
+          className="object-cover opacity-70"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#0F0F0F] opacity-30" />
+        <div className="absolute inset-0 flex flex-col justify-end p-12">
+          <h2 className="font-display font-bold text-[32px] text-white leading-tight mb-3">
+            The kitchen is <em className="italic">yours</em>
+          </h2>
+          <p className="font-sans font-light text-[15px] text-[#888888] max-w-[320px] leading-relaxed">
+            Plan, cook, and shop as a household. No more chaos, no more duplicate grocery runs.
           </p>
         </div>
+      </div>
 
-        {/* Form card */}
-        <div className="bg-bg-card rounded-card border border-border p-8">
-          <h2 className="font-bold text-[18px] text-ink mb-1">
-            {isSignUp ? "Create account" : "Welcome back"}
-          </h2>
-          <p className="text-[13px] text-ink-muted mb-6">
-            {isSignUp
-              ? "Sign up to save your recipes in the cloud"
-              : "Sign in to access your recipes"}
-          </p>
+      {/* Right form panel */}
+      <div className="flex-1 flex flex-col items-center justify-center px-8 md:px-16 bg-[#F7F5F2]">
+        <div className="w-full max-w-[380px]">
+          {/* Logo */}
+          <div className="flex items-center gap-3 mb-10">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" className="shrink-0">
+              <circle cx="12" cy="18" r="8" stroke="#0F0F0F" strokeWidth="2" fill="none" />
+              <line x1="18" y1="12" x2="25" y2="4" stroke="#0F0F0F" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            <span className="font-display text-[22px] text-[#0F0F0F]">
+              <span className="font-bold">Roux</span>
+              <em className="font-bold italic">tine</em>
+            </span>
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block font-medium text-[12px] text-ink-light mb-1.5">
-                Email
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" strokeWidth={2} />
+          {/* Script tagline */}
+          <div className="mb-8">
+            <span className="font-script text-[20px] text-[#E8200F]">
+              {isSignUp ? "Let's cook together" : "Welcome back"}
+            </span>
+          </div>
+
+          {/* Tab switcher */}
+          <div className="flex items-center gap-0 mb-8 border-b border-[#E5E3DF]">
+            <button
+              onClick={() => switchMode(false)}
+              className={`pb-3 px-1 mr-6 font-sans font-medium text-[13px] tracking-[0.06em] transition-colors ${
+                !isSignUp
+                  ? "text-[#0F0F0F] border-b-2 border-[#E8200F]"
+                  : "text-[#888888] hover:text-[#444444]"
+              }`}
+            >
+              Sign In
+            </button>
+            <button
+              onClick={() => switchMode(true)}
+              className={`pb-3 px-1 font-sans font-medium text-[13px] tracking-[0.06em] transition-colors ${
+                isSignUp
+                  ? "text-[#0F0F0F] border-b-2 border-[#E8200F]"
+                  : "text-[#888888] hover:text-[#444444]"
+              }`}
+            >
+              Create Account
+            </button>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {isSignUp && (
+              <div>
+                <label className="block font-sans font-medium text-[11px] tracking-[0.12em] text-[#888888] uppercase mb-2">
+                  Full Name
+                </label>
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  required
-                  className="w-full bg-bg-warm border border-border rounded-input pl-10 pr-4 py-2.5 text-[13px] text-ink placeholder:text-ink-muted focus:outline-none focus:border-accent transition-colors"
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Sarah Chen"
+                  className="w-full bg-white border-2 border-[#E5E3DF] rounded-md px-4 py-3 font-sans font-light text-[14px] text-[#0F0F0F] placeholder:text-[#888888] focus:outline-none focus:border-[#0F0F0F] transition-colors"
                 />
               </div>
+            )}
+
+            <div>
+              <label className="block font-sans font-medium text-[11px] tracking-[0.12em] text-[#888888] uppercase mb-2">
+                Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="sarah@example.com"
+                required
+                className="w-full bg-white border-2 border-[#E5E3DF] rounded-md px-4 py-3 font-sans font-light text-[14px] text-[#0F0F0F] placeholder:text-[#888888] focus:outline-none focus:border-[#0F0F0F] transition-colors"
+              />
             </div>
 
             <div>
-              <label className="block font-medium text-[12px] text-ink-light mb-1.5">
+              <label className="block font-sans font-medium text-[11px] tracking-[0.12em] text-[#888888] uppercase mb-2">
                 Password
               </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" strokeWidth={2} />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder={isSignUp ? "At least 6 characters" : "Your password"}
-                  required
-                  minLength={6}
-                  className="w-full bg-bg-warm border border-border rounded-input pl-10 pr-4 py-2.5 text-[13px] text-ink placeholder:text-ink-muted focus:outline-none focus:border-accent transition-colors"
-                />
-              </div>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={isSignUp ? "At least 6 characters" : "Your password"}
+                required
+                minLength={6}
+                className="w-full bg-white border-2 border-[#E5E3DF] rounded-md px-4 py-3 font-sans font-light text-[14px] text-[#0F0F0F] placeholder:text-[#888888] focus:outline-none focus:border-[#0F0F0F] transition-colors"
+              />
             </div>
 
             {error && (
-              <div className="bg-danger-bg border border-danger/20 rounded-input px-4 py-2.5 text-[12px] text-danger">
+              <div className="bg-danger-bg border border-danger/20 rounded-md px-4 py-2.5 text-[12px] text-danger">
                 {error}
               </div>
             )}
 
             {message && (
-              <div className="bg-accent-bg border border-accent/20 rounded-input px-4 py-2.5 text-[12px] text-green-700">
+              <div className="bg-accent-bg border border-accent/20 rounded-md px-4 py-2.5 text-[12px] text-green-700">
                 {message}
               </div>
             )}
@@ -133,34 +187,34 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-accent text-white rounded-pill py-3 text-[13px] font-medium tracking-wide hover:-translate-y-[1px] hover:shadow-button transition-all disabled:opacity-50 disabled:hover:translate-y-0"
+              className="w-full flex items-center justify-center gap-2 bg-[#E8200F] text-white font-sans font-medium text-[14px] tracking-[0.04em] py-3.5 rounded-lg hover:bg-[#C41A0C] transition-colors disabled:opacity-50"
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
+              ) : isSignUp ? (
+                "Start Your Kitchen"
               ) : (
-                <>
-                  {isSignUp ? "Create account" : "Sign in"}
-                  <ArrowRight className="w-4 h-4" strokeWidth={2} />
-                </>
+                "Enter Your Kitchen"
               )}
             </button>
           </form>
-        </div>
 
-        {/* Toggle sign up / sign in */}
-        <p className="text-center text-[13px] text-ink-muted mt-6">
-          {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-          <button
-            onClick={() => {
-              setIsSignUp(!isSignUp);
-              setError("");
-              setMessage("");
-            }}
-            className="text-accent font-semibold hover:underline"
-          >
-            {isSignUp ? "Sign in" : "Sign up"}
-          </button>
-        </p>
+          {/* Forgot password */}
+          {!isSignUp && (
+            <p className="text-center font-sans text-[12px] text-[#888888] mt-4">
+              <Link href="/password-reset-request" className="hover:text-[#0F0F0F] transition-colors">
+                Forgot your password?
+              </Link>
+            </p>
+          )}
+
+          {/* Back to home */}
+          <p className="text-center font-sans text-[12px] text-[#888888] mt-6">
+            <Link href="/" className="hover:text-[#0F0F0F] transition-colors">
+              ← Back to Rouxtine
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

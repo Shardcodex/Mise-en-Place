@@ -81,7 +81,7 @@ export default function PlannerView() {
   }, [weekDates, weekStartDay]);
 
   // usePlanner needs weekStartDate to scope the DB query — must be called after weekStartDate
-  const { assignments, profile, loading, error, fetchData, addAssignment, updateAssignment, removeAssignment } =
+  const { assignments, profile, loading, error, fetchData, addAssignment, addLeftover, updateAssignment, removeAssignment } =
     usePlanner(weekStartDate);
   const { recipes } = useRecipes(activeCookbook?.id);
 
@@ -120,6 +120,16 @@ export default function PlannerView() {
     else showToast("Failed to add meal", "error");
   }, [addAssignment, showToast]);
 
+  const handleAddLeftover = useCallback(async (
+    sourceAssignment: PlannerAssignment,
+    day: DayName,
+    meal_type: MealType
+  ) => {
+    const ok = await addLeftover(sourceAssignment, day, meal_type);
+    if (ok) showToast("Leftovers added to plan");
+    else showToast("Failed to add leftovers", "error");
+  }, [addLeftover, showToast]);
+
   const handleEditConfirm = useCallback(async (id: string, changes: { scale: number; day: DayName; meal_type: MealType }) => {
     const ok = await updateAssignment(id, changes);
     if (ok) showToast("Meal updated");
@@ -131,8 +141,8 @@ export default function PlannerView() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h2 className="font-bold text-[22px] text-ink mb-1">Planner</h2>
-          <p className="text-[13px] text-ink-muted">
+          <h1 className="font-display font-bold text-[32px] text-[#0F0F0F] mb-1">Planner</h1>
+          <p className="font-sans text-[13px] text-[#888888]">
             {loading
               ? "Loading your plan…"
               : assignments.length === 0
@@ -202,7 +212,9 @@ export default function PlannerView() {
         targetDay={addTarget.day}
         targetMealType={addTarget.mealType}
         recipes={recipes}
+        allAssignments={assignments}
         onConfirm={handleAddConfirm}
+        onLeftover={handleAddLeftover}
         onClose={() => setAddOpen(false)}
       />
       <RecipePickerEdit

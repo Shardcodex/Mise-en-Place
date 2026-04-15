@@ -37,8 +37,8 @@ export default function ShoppingView() {
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 no-print">
         <div>
-          <h2 className="font-bold text-[22px] text-ink mb-1">Shopping List</h2>
-          <p className="text-[13px] text-ink-muted">
+          <h1 className="font-display font-bold text-[32px] text-[#0F0F0F] mb-1">Shopping List</h1>
+          <p className="font-sans text-[13px] text-[#888888]">
             {loading
               ? "Generating your list…"
               : totalCount === 0

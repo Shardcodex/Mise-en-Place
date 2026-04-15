@@ -45,6 +45,10 @@ const config: Config = {
           "Georgia",
           "serif",
         ],
+        script: [
+          "var(--font-petit-formal)",
+          "cursive",
+        ],
       },
       borderRadius: {
         card: "14px",

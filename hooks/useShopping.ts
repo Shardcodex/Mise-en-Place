@@ -56,7 +56,11 @@ function aggregateItems(
   // key → ShoppingItem (mutable while building)
   const map = new Map<string, ShoppingItem>();
 
-  for (const assignment of assignments) {
+  // Leftovers slots share ingredients with their source meal — skip them so
+  // ingredients aren't double-counted on the shopping list.
+  const nonLeftoverAssignments = assignments.filter((a) => !a.leftover_of_id);
+
+  for (const assignment of nonLeftoverAssignments) {
     const recipe = assignment.recipe;
     if (!recipe) continue;
 

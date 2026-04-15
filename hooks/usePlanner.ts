@@ -75,9 +75,42 @@ export function usePlanner(weekStartDate: string) {
       meal_type,
       scale,
       week_start_date: weekStartDate,
+      leftover_of_id: null,
     });
     if (error) {
       console.error("addAssignment error:", error);
+      return false;
+    }
+    await fetchData();
+    return true;
+  }
+
+  /**
+   * Add a "leftovers" slot pointing back to an existing assignment.
+   * The new slot gets the same recipe_id and scale as the source, but a
+   * different day/meal_type. Shopping aggregation will skip it.
+   */
+  async function addLeftover(
+    sourceAssignment: PlannerAssignment,
+    day: DayName,
+    meal_type: MealType
+  ): Promise<boolean> {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    const { error } = await supabase.from("planner_assignments").insert({
+      user_id: user.id,
+      recipe_id: sourceAssignment.recipe_id,
+      day,
+      meal_type,
+      scale: sourceAssignment.scale,
+      week_start_date: weekStartDate,
+      leftover_of_id: sourceAssignment.id,
+    });
+    if (error) {
+      console.error("addLeftover error:", error);
       return false;
     }
     await fetchData();
@@ -120,6 +153,7 @@ export function usePlanner(weekStartDate: string) {
     error,
     fetchData,
     addAssignment,
+    addLeftover,
     updateAssignment,
     removeAssignment,
   };

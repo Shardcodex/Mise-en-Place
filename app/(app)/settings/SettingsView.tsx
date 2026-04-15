@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Download,
   Upload,
@@ -11,6 +12,8 @@ import {
   AlertTriangle,
   ChefHat,
   Loader2,
+  Users,
+  ArrowRight,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { DAYS, CATEGORIES } from "@/lib/constants";
@@ -528,8 +531,8 @@ export default function SettingsView() {
     <>
       {/* Page header */}
       <div className="mb-8">
-        <h2 className="font-bold text-[22px] text-ink mb-1">Settings</h2>
-        <p className="text-[13px] text-ink-muted">
+        <h1 className="font-display font-bold text-[32px] text-[#0F0F0F] mb-1">Settings</h1>
+        <p className="font-sans text-[13px] text-[#888888]">
           Preferences, data management and account
         </p>
       </div>
@@ -574,6 +577,20 @@ export default function SettingsView() {
                 </div>
               </div>
             )}
+          </SettingsRow>
+        </Section>
+
+        {/* ── People ───────────────────────────────────────────────────── */}
+        <Section title="People" description="Manage who has access to your shared cookbook">
+          <SettingsRow label="Members" hint="Add or remove household members">
+            <Link
+              href="/settings/members"
+              className="flex items-center gap-1.5 bg-transparent border border-border text-ink-light rounded-pill px-4 py-2 text-[12px] font-semibold hover:border-accent hover:text-accent transition-all"
+            >
+              <Users className="w-3.5 h-3.5" strokeWidth={2} />
+              Manage
+              <ArrowRight className="w-3 h-3" strokeWidth={2} />
+            </Link>
           </SettingsRow>
         </Section>
 

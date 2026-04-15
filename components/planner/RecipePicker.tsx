@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, Check, ChevronLeft } from "lucide-react";
+import { Search, Check, ChevronLeft, CornerDownRight } from "lucide-react";
 import Modal, { ModalHeader, ModalFooter } from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
 import { DAYS, MEALS, PLANNER_MEALS, MEAL_LABELS, SCALE_PRESETS } from "@/lib/constants";
@@ -43,11 +43,19 @@ interface AddModeProps {
   targetDay: DayName;
   targetMealType: MealType;
   recipes: Recipe[];
+  /** All assignments for the current week — used to populate the leftovers section */
+  allAssignments?: PlannerAssignment[];
   onConfirm: (
     recipe_id: string,
     day: DayName,
     meal_type: MealType,
     scale: number
+  ) => Promise<void>;
+  /** Called when the user picks a leftover source instead of a new recipe */
+  onLeftover?: (
+    sourceAssignment: PlannerAssignment,
+    day: DayName,
+    meal_type: MealType
   ) => Promise<void>;
   onClose: () => void;
 }
@@ -57,7 +65,9 @@ export function RecipePickerAdd({
   targetDay,
   targetMealType,
   recipes,
+  allAssignments = [],
   onConfirm,
+  onLeftover,
   onClose,
 }: AddModeProps) {
   const [step, setStep] = useState<"pick" | "scale">("pick");
@@ -88,11 +98,30 @@ export function RecipePickerAdd({
     return { suggested: [], others: base };
   }, [recipes, search, targetMealType]);
 
+  /**
+   * Non-leftover assignments from the current week that have a recipe loaded.
+   * These are candidates for "use as leftovers" in this slot.
+   */
+  const leftoverCandidates = useMemo(() => {
+    if (!onLeftover) return [];
+    return allAssignments.filter(
+      (a) => !a.leftover_of_id && a.recipe
+    );
+  }, [allAssignments, onLeftover]);
+
   function handleRecipePick(recipe: Recipe) {
     setSelectedRecipe(recipe);
     setScale(1);
     setCustomScale("");
     setStep("scale");
+  }
+
+  async function handleLeftoverPick(sourceAssignment: PlannerAssignment) {
+    if (!onLeftover) return;
+    setSaving(true);
+    await onLeftover(sourceAssignment, targetDay, targetMealType);
+    setSaving(false);
+    handleClose();
   }
 
   function handleBack() {
@@ -177,6 +206,43 @@ export function RecipePickerAdd({
               className="w-full bg-bg-warm border border-border rounded-input pl-9 pr-4 py-2.5 text-[13px] text-ink placeholder:text-ink-muted focus:outline-none focus:border-accent transition-colors"
             />
           </div>
+
+          {/* Leftovers section — only when no active search */}
+          {!search.trim() && leftoverCandidates.length > 0 && (
+            <div className="mb-5">
+              <p className="text-[10px] font-semibold text-[#888888] uppercase tracking-wider px-1 mb-1.5 flex items-center gap-1">
+                <CornerDownRight className="w-3 h-3" strokeWidth={2} />
+                Leftovers from this week
+              </p>
+              <div className="flex flex-col gap-1">
+                {leftoverCandidates.map((a) => {
+                  const r = a.recipe!;
+                  return (
+                    <button
+                      key={a.id}
+                      onClick={() => handleLeftoverPick(a)}
+                      disabled={saving}
+                      className="flex items-center gap-3 w-full text-left px-3 py-2 rounded-[10px] border border-dashed border-[#CCCCCC] hover:border-[#888888] bg-[#F7F5F2] transition-all group"
+                    >
+                      <span className="text-[18px] leading-none flex-shrink-0 opacity-70">{r.emoji}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] font-semibold text-[#444444] truncate group-hover:text-[#0F0F0F] transition-colors">
+                          {r.name}
+                        </p>
+                        <p className="text-[10px] text-[#888888]">
+                          {a.day} · {MEAL_LABELS[a.meal_type]}
+                        </p>
+                      </div>
+                      <span className="text-[10px] text-[#888888] font-medium italic flex-shrink-0">
+                        use leftovers
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="mt-4 border-t border-[#E5E3DF]" />
+            </div>
+          )}
 
           {/* Recipe list */}
           {recipes.length === 0 ? (

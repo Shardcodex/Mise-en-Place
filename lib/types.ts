@@ -106,6 +106,7 @@ export interface PlannerAssignment {
   meal_type: MealType;
   scale: number;
   week_start_date: string; // ISO date (YYYY-MM-DD) of the Monday/Sunday that starts this week
+  leftover_of_id: string | null; // if set, this slot is leftovers from another assignment
   created_at: string;
   recipe?: Recipe;
 }

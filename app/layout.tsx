@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans, Playfair_Display } from "next/font/google";
+import { DM_Sans, Playfair_Display, Petit_Formal_Script } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 
@@ -15,6 +15,13 @@ const playfair = Playfair_Display({
   weight: ["400", "700"],
   style: ["normal", "italic"],
   variable: "--font-playfair",
+  display: "swap",
+});
+
+const petitFormalScript = Petit_Formal_Script({
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-petit-formal",
   display: "swap",
 });
 
@@ -50,7 +57,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${dmSans.variable} ${playfair.variable}`}>
+    <html lang="en" className={`${dmSans.variable} ${playfair.variable} ${petitFormalScript.variable}`}>
       <body className="font-sans">
         {children}
         <Script
