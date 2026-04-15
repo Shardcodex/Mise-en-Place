@@ -36,14 +36,14 @@ export default function Sidebar() {
 
       <div className="pl-6 pr-5 pt-8 pb-8 flex flex-col h-full">
         {/* Logo */}
-        <div className="flex items-center gap-3 mb-12">
-          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" className="shrink-0">
-            <circle cx="12" cy="18" r="8" stroke="#FFFFFF" strokeWidth="2" fill="none" />
-            <line x1="18" y1="12" x2="25" y2="4" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-          <span className="font-display text-[22px] text-white">
-            <span className="font-bold">Roux</span><em className="font-bold italic">tine</em>
-          </span>
+        <div className="mb-12">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo.svg"
+            alt="Rouxtine"
+            style={{ height: 26, width: "auto" }}
+            className="brightness-0 invert"
+          />
         </div>
 
         {/* Nav */}

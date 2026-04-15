@@ -35,12 +35,7 @@ export const metadata: Metadata = {
   applicationName: "Rouxtine",
   keywords: ["meal planning", "recipe manager", "shopping list", "meal prep", "rouxtine"],
   icons: {
-    icon: [
-      {
-        url: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44' fill='none'><circle cx='16' cy='14' r='9' stroke='%230F0F0F' stroke-width='2'/><line x1='22' y1='20' x2='38' y2='38' stroke='%23E8200F' stroke-width='2.5' stroke-linecap='round'/><circle cx='16' cy='14' r='4' fill='%23E8200F' opacity='0.25'/></svg>",
-        type: "image/svg+xml",
-      },
-    ],
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
   },
 };
 

@@ -4,17 +4,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { BookOpen, CalendarDays, ShoppingCart } from "lucide-react";
 
+// eslint-disable-next-line @next/next/no-img-element
 const RouxtineLogo = ({ dark = false }: { dark?: boolean }) => (
-  <div className="flex items-center gap-3">
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" className="shrink-0">
-      <circle cx="12" cy="18" r="8" stroke={dark ? "#FFFFFF" : "#0F0F0F"} strokeWidth="2" fill="none" />
-      <line x1="18" y1="12" x2="25" y2="4" stroke={dark ? "#FFFFFF" : "#0F0F0F"} strokeWidth="2" strokeLinecap="round" />
-    </svg>
-    <span className={`font-display text-[22px] ${dark ? "text-white" : "text-[#0F0F0F]"}`}>
-      <span className="font-bold">Roux</span>
-      <em className="font-bold italic">tine</em>
-    </span>
-  </div>
+  <img
+    src="/logo.svg"
+    alt="Rouxtine"
+    style={{ height: 26, width: "auto" }}
+    className={dark ? "brightness-0 invert" : undefined}
+  />
 );
 
 export default function LandingPage() {

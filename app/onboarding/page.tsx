@@ -59,15 +59,9 @@ export default function OnboardingPage() {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0F0F0F] via-[#0F0F0F]/30 to-transparent opacity-80" />
         <div className="absolute bottom-0 left-0 right-0 p-10">
-          <div className="flex items-center gap-3 mb-6">
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" className="shrink-0">
-              <circle cx="12" cy="18" r="8" stroke="#FFFFFF" strokeWidth="2" fill="none" />
-              <line x1="18" y1="12" x2="25" y2="4" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-            <span className="font-display text-[22px] text-white">
-              <span className="font-bold">Roux</span>
-              <em className="font-bold italic">tine</em>
-            </span>
+          <div className="mb-6">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.svg" alt="Rouxtine" style={{ height: 26, width: "auto" }} className="brightness-0 invert" />
           </div>
           <p className="font-display italic text-[18px] text-white leading-relaxed mb-3">
             &ldquo;A kitchen is only as good as the people who share it.&rdquo;

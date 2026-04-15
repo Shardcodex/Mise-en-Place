@@ -84,15 +84,9 @@ export default function LoginPage() {
       <div className="flex-1 flex flex-col items-center justify-center px-8 md:px-16 bg-[#F7F5F2]">
         <div className="w-full max-w-[380px]">
           {/* Logo */}
-          <div className="flex items-center gap-3 mb-10">
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" className="shrink-0">
-              <circle cx="12" cy="18" r="8" stroke="#0F0F0F" strokeWidth="2" fill="none" />
-              <line x1="18" y1="12" x2="25" y2="4" stroke="#0F0F0F" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-            <span className="font-display text-[22px] text-[#0F0F0F]">
-              <span className="font-bold">Roux</span>
-              <em className="font-bold italic">tine</em>
-            </span>
+          <div className="mb-10">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.svg" alt="Rouxtine" style={{ height: 28, width: "auto" }} />
           </div>
 
           {/* Script tagline */}
